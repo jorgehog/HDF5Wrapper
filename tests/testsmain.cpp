@@ -1,8 +1,11 @@
+#include <sys/time.h>
 #include <iostream>
-#include <hdf5wrapper.h>
 
 #include <armadillo>
 
+#include <hdf5wrapper.h>
+
+using namespace arma;
 using namespace std;
 
 
@@ -13,13 +16,30 @@ int main()
 
     writer.initialize();
 
-    uint nFields = 100;
-    uint maxSize = 1000;
+    srand(time(NULL));
+
+    uint nFields = 10000;
+    uint maxSize = 100;
 
     uint n = 0;
+
+    uint nx;
+    uint ny;
+
     while (n < nFields)
     {
-        cout << random() << endl;
+        nx = 1 + (rand() % maxSize);
+        ny = 1 + (rand() % maxSize);
+
+        mat m(nx, ny, fill::randu);
+
+        uint key = nx*(maxSize + 1) + ny;
+
+        if (!writer.hasMember(key))
+        {
+            writer.registerMember(key)
+        }
+
         n++;
     }
 
