@@ -5,15 +5,20 @@
 using namespace H5;
 using namespace std;
 
-HDF5Wrapper::HDF5Wrapper(const std::string filename):
-    m_filename(filename)
+HDF5Wrapper::HDF5Wrapper(const std::string filename) :
+    HDF5Member(NULL, ""),
+    m_filename(filename),
+    m_state(state::OPEN)
 {
 
 }
 
 HDF5Wrapper::~HDF5Wrapper()
 {
-    delete m_file;
+    if (m_state == state::OPEN)
+    {
+        finalize();
+    }
 }
 
 
@@ -25,6 +30,8 @@ void HDF5Wrapper::initialize(const uint flag)
     {
         m_file = new H5File(m_filename, flag);
         cout << "Opened HDF5 file " << m_filename << endl;
+
+        _onFileOpen();
     }
     catch (const FileIException &exc)
     {
@@ -36,3 +43,15 @@ void HDF5Wrapper::initialize(const uint flag)
     }
 
 }
+
+void HDF5Wrapper::finalize()
+{
+    delete m_file;
+    m_state = state::CLOSED;
+}
+
+void HDF5Wrapper::_onFileOpen()
+{
+
+}
+

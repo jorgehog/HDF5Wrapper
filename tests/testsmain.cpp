@@ -18,7 +18,7 @@ int main()
 
     srand(time(NULL));
 
-    uint nFields = 10000;
+    uint nMembers = 10000;
     uint maxSize = 100;
 
     uint n = 0;
@@ -26,7 +26,7 @@ int main()
     uint nx;
     uint ny;
 
-    while (n < nFields)
+    while (n < nMembers)
     {
         nx = 1 + (rand() % maxSize);
         ny = 1 + (rand() % maxSize);
@@ -35,12 +35,13 @@ int main()
 
         uint key = nx*(maxSize + 1) + ny;
 
+
         if (!writer.hasMember(key))
         {
-            writer.registerMember(key)
+            writer.registerMember(key, m);
+            n++;
         }
 
-        n++;
     }
 
     cout << "Hello World!" << endl;
