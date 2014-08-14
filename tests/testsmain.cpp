@@ -45,6 +45,8 @@ int main()
 
     member->addData("lols", "heisann");
 
+    root.removeMember("firstMember");
+
     return 0;
 
     while (n < nMembers && nc < NMAX)

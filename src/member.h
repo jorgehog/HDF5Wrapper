@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sstream>
 #include <map>
+#include <set>
 
 #ifndef HDF5_NO_ARMA
 #include <armadillo>
@@ -17,6 +18,7 @@ using namespace arma;
 using std::string;
 using std::map;
 using std::vector;
+using std::set;
 using std::pair;
 
 using H5::H5File;
@@ -67,7 +69,7 @@ public:
             delete member.second;
         }
 
-        _dumpKeysToGroup();
+        //        _dumpKeysToGroup();
 
         m_members.clear();
         m_allSetKeys.clear();
@@ -103,7 +105,23 @@ public:
 
     void clear()
     {
+        cout << "lals" << m_allAttrKeys.size() << endl;
+        for (const string &key : m_allAttrKeys)
+        {
+            m_group->removeAttr(key);
+            cout << "clearing attr " << key << endl;
+        }
 
+        for (const string &key : m_allSetKeys)
+        {
+            m_group->unlink(key);
+            cout << "clearing set " << key << endl;
+        }
+
+        for (auto &member : m_members)
+        {
+            member.second->clear();
+        }
     }
 
     template<typename kT>
@@ -158,7 +176,11 @@ public:
         delete member;
 
         m_members.erase(key);
+    }
 
+    void removeMember(Member *member)
+    {
+        removeMember(member->ID());
     }
 
     template<typename kT>
@@ -201,11 +223,12 @@ public:
         {
             DataSet dataset(m_file->createDataSet(getFullGroup() + setname, CToPredType<eT>::type(), DataSpace(rank, dims)));
             dataset.write(data, CToPredType<eT>::type());
-            m_allSetKeys.push_back(setname);
+            m_allSetKeys.insert(setname);
             return true;
         }
         catch (const H5::FileIException &)
         {
+            m_allSetKeys.insert(setname);
             return false;
         }
 
@@ -218,48 +241,6 @@ public:
     {
         cout << "Storing " << typeid(eT).name() << " of size " << sizeof(data) << endl;
         return addData(setname, &data, rank, dims);
-    }
-
-    //Std::string set
-    template<typename kT>
-    bool
-    addData(const kT &_setname, const string *data, const uint rank, hsize_t dims[])
-    {
-        if (_notStorable(data, rank, dims))
-        {
-            return false;
-        }
-
-        cout << "Storing pointer string type " << *data  << endl;
-
-        const uint L = dims[0];
-
-
-
-        const char** newData = new const char*[L];
-
-        for (uint i = 0; i < dims[0]; ++i)
-        {
-            newData[i] = (*(data + i)).c_str();
-        }
-
-        string setname = _stringify(_setname);
-
-        return addData(_setname, newData, rank, dims);
-        try
-        {
-            DataSet dataset(m_file->createDataSet(getFullGroup() + setname, CToPredType<char*>::type(), DataSpace(rank, dims)));
-            dataset.write(newData, CToPredType<char*>::type());
-            m_allSetKeys.push_back(setname);
-            delete newData;
-            return true;
-        }
-        catch (const H5::FileIException &)
-        {
-            delete newData;
-            return false;
-        }
-
     }
 
     //single std::string
@@ -275,11 +256,12 @@ public:
         {
             Attribute attr(m_group->createAttribute(attrname, CToPredType<char*>::type(), H5S_SCALAR));
             attr.write(CToPredType<char*>::type(), data.c_str());
-            m_allAttrKeys.push_back(attrname);
+            m_allAttrKeys.insert(attrname);
             return true;
         }
         catch(const H5::AttributeIException &)
         {
+            m_allAttrKeys.insert(attrname);
             return false;
         }
     }
@@ -297,11 +279,12 @@ public:
         {
             Attribute attr(m_group->createAttribute(attrname, CToPredType<eT>::type(), H5S_SCALAR));
             attr.write(CToPredType<eT>::type(), &data);
-            m_allAttrKeys.push_back(attrname);
+            m_allAttrKeys.insert(attrname);
             return true;
         }
         catch(const H5::AttributeIException &)
         {
+            m_allAttrKeys.insert(attrname);
             return false;
         }
     }
@@ -364,8 +347,8 @@ private:
 
     map<string, Member*> m_members;
 
-    vector<string> m_allSetKeys;
-    vector<string> m_allAttrKeys;
+    set<string> m_allSetKeys;
+    set<string> m_allAttrKeys;
 
     template<typename T>
     static string _stringify(const T &nonString)
@@ -382,12 +365,12 @@ private:
         return string;
     }
 
-    void _dumpKeysToGroup()
-    {
-        addData("SetKeys", m_allSetKeys);
-        addData("AttrKeys", m_allAttrKeys);
-        addData("GroupKeys", _memberKeys());
-    }
+    //    void _dumpKeysToGroup()
+    //    {
+    //        addData("SetKeys", m_allSetKeys);
+    //        addData("AttrKeys", m_allAttrKeys);
+    //        addData("GroupKeys", _memberKeys());
+    //    }
 
     vector<string> _memberKeys() const
     {
