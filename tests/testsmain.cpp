@@ -18,7 +18,7 @@ int main()
 
     srand(time(NULL));
 
-    uint nMembers = 10000;
+    uint nMembers = 200;
     uint maxSize = 100;
 
     uint n = 0;
@@ -26,26 +26,57 @@ int main()
     uint nx;
     uint ny;
 
-    double a[3][3] = {{1,2,3}, {1,2,3}, {1,2,3}};
-    cube B(3,3,3, fill::randn);
-    vec A(100, fill::randu);
+    const uint NMAX = 1000000;
+    uint nc = 0;
 
-    while (n < nMembers)
+    mat md;
+    umat mu;
+    imat mi;
+
+    while (n < nMembers && nc < NMAX)
     {
         nx = 1 + (rand() % maxSize);
         ny = 1 + (rand() % maxSize);
 
-        mat m(nx, ny, fill::randu);
+        md.reshape(nx, ny);
+        md.randu();
+
+        mu = conv_to<umat>::from(randi(nx, ny, distr_param(0, 100)));
+
+        mi = randi(nx, ny, distr_param(-100, 100));
 
         uint key = nx*(maxSize + 1) + ny;
 
-
-        if (!writer.hasMember(key))
+        switch (n%3) {
+        case 0:
+            if (writer.setData(key, md))
+            {
+                n++;
+            }
+            break;
+        case 1:
+            if (writer.setData(key, mu))
+            {
+                n++;
+            }
+            break;
+        case 2:
+            if (writer.setData(key, mi))
+            {
+                n++;
+            }
+            break;
+        default:
+            break;
+        }
+        if (writer.setData(key, md))
         {
-            writer.registerMember(key, A);
             n++;
         }
 
+        nc++;
+
+        cout << n << " / " << nMembers << endl;
     }
 
     return 0;

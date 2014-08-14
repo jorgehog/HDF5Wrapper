@@ -37,10 +37,12 @@ void HDF5Wrapper::initialize(const uint flag)
     {
         (void) exc;
 
-        cout << "Creating new HDF5 file " << m_filename << endl;
         m_file = new H5File(m_filename, H5F_ACC_TRUNC);
+        cout << "Created new HDF5 file " << m_filename << endl;
 
     }
+
+    m_group = new Group(m_file->openGroup("/"));
 
 }
 

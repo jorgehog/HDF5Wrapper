@@ -1,10 +1,10 @@
 INCLUDEPATH += /usr/local/hdf5/include
 
-LIBS += -L../lib -lHDF5Wrapper -L/usr/local/hdf5/lib -lhdf5_cpp -lhdf5
+LIBS +=-L/usr/local/hdf5/lib -lhdf5_cpp -lhdf5
 
-!noccache {
-    QMAKE_CXX = ccache $$QMAKE_CXX
-}
+#!noccache {
+#    QMAKE_CXX = ccache $$QMAKE_CXX
+#}
 
 INCLUDEPATH += $$PWD/utils
 

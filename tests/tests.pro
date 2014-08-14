@@ -5,6 +5,8 @@ CONFIG -= qt
 
 include(../defaults.pri)
 
+LIBS += -L../lib -lHDF5Wrapper
+
 SOURCES += testsmain.cpp
 
 INCLUDEPATH += ../include
