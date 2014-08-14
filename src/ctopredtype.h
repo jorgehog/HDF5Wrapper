@@ -6,12 +6,6 @@
 #include <BADAss/badass.h>
 
 
-#include <iostream>
-using std::cout;
-using std::endl;
-
-
-
 using H5::AtomType;
 using H5::PredType;
 using H5::StrType;
@@ -25,7 +19,6 @@ struct CToPredType<CTYPE> \
 { \
     static const AtomType type() \
     { \
-        cout << "getting type " << #CTYPE << endl; \
         return HDF5TYPE; \
     } \
 }; \

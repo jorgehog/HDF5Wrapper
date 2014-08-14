@@ -27,12 +27,6 @@ using H5::Attribute;
 using H5::DataSet;
 using H5::DataSpace;
 
-
-
-#include <iostream>
-using std::cout;
-using std::endl;
-
 #include "ctopredtype.h"
 
 namespace H5Wrapper
@@ -105,23 +99,25 @@ public:
 
     void purge()
     {
-        cout << "lals" << m_allAttrKeys.size() << endl;
+
         for (const string &key : m_allAttrKeys)
         {
             m_group->removeAttr(key);
-            cout << "clearing attr " << key << endl;
         }
 
         for (const string &key : m_allSetKeys)
         {
             m_group->unlink(key);
-            cout << "clearing set " << key << endl;
         }
 
         for (auto &member : m_members)
         {
             member.second->purge();
         }
+
+        m_allAttrKeys.clear();
+        m_allSetKeys.clear();
+
     }
 
     template<typename kT>
@@ -134,11 +130,13 @@ public:
         if (m_group->attrExists(key))
         {
             m_group->removeAttr(key);
+            m_allAttrKeys.erase(key);
         }
 
         if (hasSet(key))
         {
             m_group->unlink(key);
+            m_allSetKeys.erase(key);
         }
 
     }
@@ -234,8 +232,6 @@ public:
             return false;
         }
 
-        cout << "Storing pointer type " << typeid(eT).name() << " of size " << sizeof(data) << endl;
-
         string setname = _stringify(_setname);
 
         try
@@ -258,7 +254,6 @@ public:
     typename std::enable_if<!std::is_pointer<eT>::value && !std::is_integral<eT>::value, bool>::type
     addData(const kT &setname, const eT &data, const uint rank, hsize_t dims[])
     {
-        cout << "Storing " << typeid(eT).name() << " of size " << sizeof(data) << endl;
         return addData(setname, &data, rank, dims);
     }
 
@@ -267,7 +262,6 @@ public:
     bool
     addData(const kT &_attrname, const string &data)
     {
-        cout << "Storing attribute string " << data << endl;
         string attrname = _stringify(_attrname);
 
         try
@@ -289,8 +283,6 @@ public:
     typename std::enable_if<std::is_integral<eT>::value, bool>::type
     addData(const kT &_attrname, const eT data)
     {
-        cout << "Storing attribute " << typeid(eT).name() << " of size " << sizeof(data) << endl;
-
         string attrname = _stringify(_attrname);
 
         try
@@ -311,8 +303,6 @@ public:
     template<typename kT, typename eT>
     bool addData(const kT &setname, const vector<eT> &data)
     {
-        cout << "stong std vector of type " << typeid(eT).name() << " of size " << sizeof(eT) << endl;
-
         hsize_t dims[1] = {data.size()};
         return addData(setname, data.front(), 1, dims);
     }
@@ -322,8 +312,6 @@ public:
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Col<eT> &data)
     {
-        cout << "Storing arma colvec of type " << typeid(eT).name() << " of size " << sizeof(data) << endl;
-
         hsize_t dims[1] = {data.n_elem};
         return addData(setname, data.memptr(), 1, dims);
     }
@@ -331,8 +319,6 @@ public:
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Row<eT> &data)
     {
-        cout << "Storing arma rowvec of type " << typeid(eT).name() << " of size " << sizeof(data) << endl;
-
         hsize_t dims[1] = {data.n_elem};
         return addData(setname, data.memptr(), 1, dims);
     }
@@ -340,8 +326,6 @@ public:
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Mat<eT> &data)
     {
-        cout << "Storing arma matrix of type " << typeid(eT).name() << " of size " << sizeof(data) << endl;
-
         hsize_t dims[2] = {data.n_rows, data.n_cols};
         return addData(setname, data.memptr(), 2, dims);
     }
@@ -349,8 +333,6 @@ public:
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Cube<eT> &data)
     {
-        cout << "Storing arma cube of type " << typeid(eT).name() << " of size " << sizeof(data) << endl;
-
         hsize_t dims[3] = {data.n_slices, data.n_rows, data.n_cols};
         return addData(setname, data.memptr(), 3, dims);
     }
@@ -414,10 +396,21 @@ private:
             notStorable = notStorable || (dims[i] == 0);
         }
 
-        if (notStorable)
+        BADAssBool(!notStorable, "Not Storable.", [&] ()
         {
-            cout << "not storable." << endl;
-        }
+
+            cout << "rank : " << rank << endl;
+
+            cout << "dims : ";
+            for (uint i = 0; i < rank; ++i)
+            {
+                cout << dims[i] << " ";
+            }
+            cout << endl;
+
+            cout << "buffer : " << buffer << endl;
+
+        });
 
         return notStorable;
     }
