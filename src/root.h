@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hdf5member.h"
+#include "member.h"
 
 #include <H5Cpp.h>
 
@@ -10,13 +10,17 @@ using namespace arma;
 using namespace H5;
 using std::string;
 
-class HDF5Wrapper : public HDF5Member
+
+namespace H5Wrapper
+{
+
+class Root : public Member
 {
 public:
 
-    HDF5Wrapper(const string filename);
+    Root(const string filename);
 
-    virtual ~HDF5Wrapper();
+    virtual ~Root();
 
     void initialize(const uint flag);
 
@@ -81,3 +85,5 @@ private:
     void _onFileOpen();
 
 };
+
+}

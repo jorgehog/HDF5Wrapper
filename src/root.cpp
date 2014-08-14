@@ -1,19 +1,21 @@
-#include "hdf5wrapper.h"
+#include "root.h"
 
 #include <iostream>
 
 using namespace H5;
+using namespace H5Wrapper;
 using namespace std;
 
-HDF5Wrapper::HDF5Wrapper(const std::string filename) :
-    HDF5Member(NULL, ""),
+
+Root::Root(const std::string filename) :
+    Member(NULL, ""),
     m_filename(filename),
     m_state(state::OPEN)
 {
 
 }
 
-HDF5Wrapper::~HDF5Wrapper()
+Root::~Root()
 {
     if (m_state == state::OPEN)
     {
@@ -22,7 +24,7 @@ HDF5Wrapper::~HDF5Wrapper()
 }
 
 
-void HDF5Wrapper::initialize(const uint flag)
+void Root::initialize(const uint flag)
 {
     Exception::dontPrint();
 
@@ -43,16 +45,15 @@ void HDF5Wrapper::initialize(const uint flag)
     }
 
     m_group = new Group(m_file->openGroup("/"));
-
 }
 
-void HDF5Wrapper::finalize()
+void Root::finalize()
 {
     delete m_file;
     m_state = state::CLOSED;
 }
 
-void HDF5Wrapper::_onFileOpen()
+void Root::_onFileOpen()
 {
 
 }

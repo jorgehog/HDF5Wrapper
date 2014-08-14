@@ -13,11 +13,13 @@ noarma {
 }
 
 
-SOURCES += hdf5wrapper.cpp
+SOURCES += \
+    root.cpp
 
-HEADERS += hdf5wrapper.h \
-    hdf5member.h \
-    ctopredtype.h
+HEADERS += \
+    ctopredtype.h \
+    root.h \
+    member.h
 
 
 QMAKE_PRE_LINK += $(MKDIR) $$PWD/../lib $$shadowed($$PWD)/../lib
