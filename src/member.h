@@ -103,7 +103,7 @@ public:
         return m_parent->getFullGroup() + m_ID + "/";
     }
 
-    void clear()
+    void purge()
     {
         cout << "lals" << m_allAttrKeys.size() << endl;
         for (const string &key : m_allAttrKeys)
@@ -120,8 +120,27 @@ public:
 
         for (auto &member : m_members)
         {
-            member.second->clear();
+            member.second->purge();
         }
+    }
+
+    template<typename kT>
+    void clearData(const kT &_key)
+    {
+        string key = _stringify(_key);
+
+        BADAssBool(m_group->attrExists(key) || hasSet(key), "Data doesn't exist.");
+
+        if (m_group->attrExists(key))
+        {
+            m_group->removeAttr(key);
+        }
+
+        if (hasSet(key))
+        {
+            m_group->unlink(key);
+        }
+
     }
 
     template<typename kT>
@@ -171,7 +190,7 @@ public:
 
         Member *member = m_members[key];
 
-        member->clear();
+        member->purge();
 
         delete member;
 
@@ -248,14 +267,13 @@ public:
     bool
     addData(const kT &_attrname, const string &data)
     {
-        cout << "Storing attribute string " << endl;
-
+        cout << "Storing attribute string " << data << endl;
         string attrname = _stringify(_attrname);
 
         try
         {
-            Attribute attr(m_group->createAttribute(attrname, CToPredType<char*>::type(), H5S_SCALAR));
-            attr.write(CToPredType<char*>::type(), data.c_str());
+            Attribute attr(m_group->createAttribute(attrname, CToPredType<char*>::type(data.size()), H5S_SCALAR));
+            attr.write(CToPredType<char*>::type(data.size()), data.c_str());
             m_allAttrKeys.insert(attrname);
             return true;
         }

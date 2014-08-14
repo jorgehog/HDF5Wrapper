@@ -45,7 +45,7 @@ int main()
 
     member->addData("lols", "heisann");
 
-    root.removeMember("firstMember");
+    member->clearData("CUBZOR");
 
     return 0;
 

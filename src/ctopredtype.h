@@ -54,12 +54,18 @@ struct CToPredType
    }
 };
 
+template<>
+struct CToPredType<char*>
+{
+   static const AtomType type(const uint size)
+   {
+       return StrType(PredType::C_S1, size);
+   }
+};
 
 
 }
 
-PREDCONVERT(const char**,            PredType::NATIVE_B64)
-TYPECONVERTSUITE(char,               PredType::NATIVE_CHAR)
 TYPECONVERTSUITE(short,              PredType::NATIVE_SHORT)
 TYPECONVERTSUITE(unsigned short,     PredType::NATIVE_USHORT)
 TYPECONVERTSUITE(int,                PredType::NATIVE_INT)
@@ -72,7 +78,6 @@ TYPECONVERTSUITE(float,              PredType::NATIVE_FLOAT)
 TYPECONVERTSUITE(double,             PredType::NATIVE_DOUBLE)
 TYPECONVERTSUITE(long double,        PredType::NATIVE_LDOUBLE)
 TYPECONVERTSUITE(bool,               PredType::NATIVE_B8)
-
 
 //all H* types are redefinitions of C-types.
 
