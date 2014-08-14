@@ -8,6 +8,11 @@
 #include <sstream>
 #include <map>
 
+#ifndef HDF5_NO_ARMA
+#include <armadillo>
+using namespace arma;
+#endif
+
 using std::string;
 using std::map;
 using std::pair;
@@ -97,11 +102,55 @@ public:
         return m_members[key];
     }
 
+    //Pointer is the main storage function. All others simply channel this one.
     template<typename T>
-    void setData(const T &data)
+    typename std::enable_if<std::is_pointer<T>::value, void>::type
+    setData(const T &data)
     {
-        cout << "Storing " << typeid(data).name() << " of size " << sizeof(data) << endl;
+        cout << "Storing pointer type " << typeid(T).name() << " of size " << sizeof(data) << endl;
     }
+
+
+    //Static object.
+    template<typename T>
+    typename std::enable_if<!std::is_pointer<T>::value, void>::type
+    setData(const T &data)
+    {
+        cout << "Storing " << typeid(T).name() << " of size " << sizeof(data) << endl;
+        setData(&data);
+    }
+
+    //Armadillo objects can be disabled.
+#ifndef HDF5_NO_ARMA
+    template<typename T>
+    void setData(const Col<T> &data)
+    {
+        cout << "Storing arma colvec of type " << typeid(T).name() << " of size " << sizeof(data) << endl;
+        setData(data.memptr());
+    }
+
+    template<typename T>
+    void setData(const Row<T> &data)
+    {
+        cout << "Storing arma rowvec of type " << typeid(T).name() << " of size " << sizeof(data) << endl;
+        setData(data.memptr());
+    }
+
+    template<typename T>
+    void setData(const Mat<T> &data)
+    {
+        cout << "Storing arma matrix of type " << typeid(T).name() << " of size " << sizeof(data) << endl;
+        setData(data.memptr());
+    }
+
+    template<typename T>
+    void setData(const Cube<T> &data)
+    {
+        cout << "Storing arma cube of type " << typeid(T).name() << " of size " << sizeof(data) << endl;
+        setData(data.memptr());
+    }
+
+#endif
 
 private:
 

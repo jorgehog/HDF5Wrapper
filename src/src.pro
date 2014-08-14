@@ -7,6 +7,11 @@ include(../defaults.pri)
 
 QMAKE_LFLAGS_DEBUG += -g
 
+noarma {
+    DEFINES += HDF5_NO_ARMA
+    LIBS += -larmadillo
+}
+
 
 SOURCES += hdf5wrapper.cpp \
     hdf5member.cpp

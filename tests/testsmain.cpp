@@ -26,6 +26,10 @@ int main()
     uint nx;
     uint ny;
 
+    double a[3][3] = {{1,2,3}, {1,2,3}, {1,2,3}};
+    cube B(3,3,3, fill::randn);
+    vec A(100, fill::randu);
+
     while (n < nMembers)
     {
         nx = 1 + (rand() % maxSize);
@@ -38,13 +42,12 @@ int main()
 
         if (!writer.hasMember(key))
         {
-            writer.registerMember(key, m);
+            writer.registerMember(key, A);
             n++;
         }
 
     }
 
-    cout << "Hello World!" << endl;
     return 0;
 }
 
