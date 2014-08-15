@@ -52,6 +52,8 @@ public:
             catch(const H5::FileIException &)
             {
                 m_group = new Group(m_file->openGroup(absoluteName()));
+
+                _loadFromFile();
             }
         }
 
@@ -487,22 +489,6 @@ private:
             notStorable = notStorable || (dims[i] == 0);
         }
 
-//        BADAssBool(!notStorable, "Not Storable.", [&] ()
-//        {
-
-//            cout << "rank : " << rank << endl;
-
-//            cout << "dims : ";
-//            for (uint i = 0; i < rank; ++i)
-//            {
-//                cout << dims[i] << " ";
-//            }
-//            cout << endl;
-
-//            cout << "buffer : " << buffer << endl;
-
-//        });
-
         return notStorable;
     }
 
@@ -510,6 +496,27 @@ protected:
 
     H5File *m_file;
     Group *m_group;
+
+    void _loadFromFile()
+    {
+//        if (hasSet("AttrKeys"))
+//        {
+//            DataSet AttrKeys = m_file->openDataSet(absoluteName() + "AttrKeys");
+//            CompType StringVecType = AttrKeys.getCompType();
+
+//            uint rank = 1;
+//            hsize_t dims[] = {1};
+
+//            char* inputBuffer;
+
+//            AttrKeys.read(inputBuffer, StringVecType);
+
+//            cout << inputBuffer << endl;
+
+
+
+//        }
+    }
 
 };
 

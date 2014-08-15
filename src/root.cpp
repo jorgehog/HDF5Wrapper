@@ -33,18 +33,21 @@ void Root::initialize(const uint flag)
         m_file = new H5File(m_filename, flag);
         cout << "Opened HDF5 file " << m_filename << endl;
 
-        _onFileOpen();
+        m_group = new Group(m_file->openGroup("/"));
+
+        _loadFromFile();
     }
     catch (const FileIException &exc)
     {
         (void) exc;
 
         m_file = new H5File(m_filename, H5F_ACC_TRUNC);
+
         cout << "Created new HDF5 file " << m_filename << endl;
 
+        m_group = new Group(m_file->openGroup("/"));
     }
 
-    m_group = new Group(m_file->openGroup("/"));
 }
 
 void Root::finalize()
@@ -53,10 +56,5 @@ void Root::finalize()
 
     delete m_file;
     m_state = state::CLOSED;
-}
-
-void Root::_onFileOpen()
-{
-
 }
 
