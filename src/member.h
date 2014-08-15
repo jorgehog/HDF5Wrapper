@@ -26,6 +26,7 @@ using H5::Group;
 using H5::Attribute;
 using H5::DataSet;
 using H5::DataSpace;
+using H5::CompType;
 
 #include "ctopredtype.h"
 
@@ -46,11 +47,11 @@ public:
         {
             try
             {
-                m_group = new Group(m_file->createGroup(getFullGroup()));
+                m_group = new Group(m_file->createGroup(absoluteName()));
             }
             catch(const H5::FileIException &)
             {
-                m_group = new Group(m_file->openGroup(getFullGroup()));
+                m_group = new Group(m_file->openGroup(absoluteName()));
             }
         }
 
@@ -63,13 +64,21 @@ public:
             delete member.second;
         }
 
-        //        _dumpKeysToGroup();
-
         m_members.clear();
         m_allSetKeys.clear();
         m_allAttrKeys.clear();
 
         delete m_group;
+    }
+
+    void finalize()
+    {
+        _dumpKeysToGroup();
+
+        for (auto & member : m_members)
+        {
+            member.second->finalize();
+        }
     }
 
     bool isRoot() const
@@ -87,14 +96,19 @@ public:
         return m_file;
     }
 
-    const string getFullGroup() const
+    const Group *group() const
+    {
+        return m_group;
+    }
+
+    const string absoluteName() const
     {
         if (isRoot())
         {
             return "/";
         }
 
-        return m_parent->getFullGroup() + m_ID + "/";
+        return m_parent->absoluteName() + m_ID + "/";
     }
 
     void purge()
@@ -121,7 +135,7 @@ public:
     }
 
     template<typename kT>
-    void clearData(const kT &_key)
+    void removeData(const kT &_key)
     {
         string key = _stringify(_key);
 
@@ -236,7 +250,7 @@ public:
 
         try
         {
-            DataSet dataset(m_file->createDataSet(getFullGroup() + setname, CToPredType<eT>::type(), DataSpace(rank, dims)));
+            DataSet dataset(m_file->createDataSet(absoluteName() + setname, CToPredType<eT>::type(), DataSpace(rank, dims)));
             dataset.write(data, CToPredType<eT>::type());
             m_allSetKeys.insert(setname);
             return true;
@@ -278,6 +292,65 @@ public:
         }
     }
 
+    //vector of std::strings
+    template<typename kT>
+    bool
+    addData(const kT &_setname, const string *data, const uint rank, hsize_t dims[])
+    {
+        if (_notStorable(data, rank, dims))
+        {
+            return false;
+        }
+
+        string setname = _stringify(_setname);
+
+        uint L = dims[0];
+        string fullString("");
+
+        string s;
+        uint size = 0;
+        for (uint k = 0; k < L; ++k)
+        {
+            s = *(data + k);
+            size += s.size();
+        }
+
+        CompType stringVecType(size*sizeof(char*));
+
+        uint offset = 0;
+        uint i = 0;
+
+        for (uint k = 0; k < L; ++k)
+        {
+            s = *(data + k);
+
+            fullString += s;
+
+            stringVecType.insertMember(_stringify(i), offset, CToPredType<char*>::type(s.size()));
+
+            i++;;
+
+            offset += s.size();
+        }
+
+        hsize_t newDims[] = {1};
+
+        try
+        {
+            DataSet dataset(m_file->createDataSet(absoluteName() + setname, stringVecType, DataSpace(rank, newDims)));
+            dataset.write(fullString.c_str(), stringVecType);
+            m_allSetKeys.insert(setname);
+            return true;
+        }
+        catch (const H5::FileIException &)
+        {
+            m_allSetKeys.insert(setname);
+            return false;
+        }
+
+    }
+
+
     //integral types
     template<typename kT, typename eT>
     typename std::enable_if<std::is_integral<eT>::value, bool>::type
@@ -306,6 +379,24 @@ public:
         hsize_t dims[1] = {data.size()};
         return addData(setname, data.front(), 1, dims);
     }
+
+    //std sets
+    template<typename kT, typename eT>
+    bool addData(const kT &setname, const set<eT> &data)
+    {
+        hsize_t dims[1] = {data.size()};
+        vector<eT> vectorOfSet(data.size());
+
+        uint i = 0;
+        for (const eT &element : data)
+        {
+            vectorOfSet.at(i) = element;
+            i++;
+        }
+
+        return addData(setname, vectorOfSet.front(), 1, dims);
+    }
+
 
     //Armadillo objects can be disabled.
 #ifndef HDF5_NO_ARMA
@@ -365,12 +456,12 @@ private:
         return string;
     }
 
-    //    void _dumpKeysToGroup()
-    //    {
-    //        addData("SetKeys", m_allSetKeys);
-    //        addData("AttrKeys", m_allAttrKeys);
-    //        addData("GroupKeys", _memberKeys());
-    //    }
+    void _dumpKeysToGroup()
+    {
+        addData("SetKeys", m_allSetKeys);
+        addData("AttrKeys", m_allAttrKeys);
+        addData("GroupKeys", _memberKeys());
+    }
 
     vector<string> _memberKeys() const
     {
@@ -396,21 +487,21 @@ private:
             notStorable = notStorable || (dims[i] == 0);
         }
 
-        BADAssBool(!notStorable, "Not Storable.", [&] ()
-        {
+//        BADAssBool(!notStorable, "Not Storable.", [&] ()
+//        {
 
-            cout << "rank : " << rank << endl;
+//            cout << "rank : " << rank << endl;
 
-            cout << "dims : ";
-            for (uint i = 0; i < rank; ++i)
-            {
-                cout << dims[i] << " ";
-            }
-            cout << endl;
+//            cout << "dims : ";
+//            for (uint i = 0; i < rank; ++i)
+//            {
+//                cout << dims[i] << " ";
+//            }
+//            cout << endl;
 
-            cout << "buffer : " << buffer << endl;
+//            cout << "buffer : " << buffer << endl;
 
-        });
+//        });
 
         return notStorable;
     }

@@ -49,6 +49,8 @@ void Root::initialize(const uint flag)
 
 void Root::finalize()
 {
+    Member::finalize();
+
     delete m_file;
     m_state = state::CLOSED;
 }

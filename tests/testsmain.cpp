@@ -45,7 +45,7 @@ int main()
 
     member->addData("lols", "heisann");
 
-    member->clearData("CUBZOR");
+    member->removeData("CUBZOR");
     member->addData("CUBZOR", C);
 
     return 0;
