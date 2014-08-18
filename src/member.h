@@ -162,7 +162,16 @@ public:
     {
         string key = _stringify(_key);
 
-        return m_members.find(key) != m_members.end();
+        try
+        {
+            m_file->openGroup(absoluteName() + key);
+            return true;
+        }
+
+        catch(const H5::FileIException &)
+        {
+            return false;
+        }
     }
 
     template<typename kT>
@@ -183,16 +192,28 @@ public:
     }
 
     template<typename kT>
-    Member *addMember(const kT &_key) {
+    Member &addMember(const kT &_key, bool overWrite = false)
+    {
         string key = _stringify(_key);
 
-        BADAssBool(!hasMember(key), "Key already exists.");
+        if (overWrite)
+        {
+            if (hasMember(key))
+            {
+                removeMember(key);
+            }
+        }
+
+        else
+        {
+            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
+        }
 
         Member *newMember = new Member(this, key);
 
         m_members[key] = newMember;
 
-        return newMember;
+        return *newMember;
     }
 
     template<typename kT>
@@ -356,7 +377,7 @@ public:
     //integral types
     template<typename kT, typename eT>
     typename std::enable_if<std::is_integral<eT>::value, bool>::type
-    addData(const kT &_attrname, const eT data)
+    addData(const kT &_attrname, const eT &data)
     {
         string attrname = _stringify(_attrname);
 
@@ -499,23 +520,23 @@ protected:
 
     void _loadFromFile()
     {
-//        if (hasSet("AttrKeys"))
-//        {
-//            DataSet AttrKeys = m_file->openDataSet(absoluteName() + "AttrKeys");
-//            CompType StringVecType = AttrKeys.getCompType();
+        //        if (hasSet("AttrKeys"))
+        //        {
+        //            DataSet AttrKeys = m_file->openDataSet(absoluteName() + "AttrKeys");
+        //            CompType StringVecType = AttrKeys.getCompType();
 
-//            uint rank = 1;
-//            hsize_t dims[] = {1};
+        //            uint rank = 1;
+        //            hsize_t dims[] = {1};
 
-//            char* inputBuffer;
+        //            char* inputBuffer;
 
-//            AttrKeys.read(inputBuffer, StringVecType);
+        //            AttrKeys.read(inputBuffer, StringVecType);
 
-//            cout << inputBuffer << endl;
+        //            cout << inputBuffer << endl;
 
 
 
-//        }
+        //        }
     }
 
 };

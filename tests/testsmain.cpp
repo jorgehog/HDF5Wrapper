@@ -37,16 +37,16 @@ int main()
     cube C(3, 3, 3, fill::randu);
     vec v(10, fill::randn);
 
-    Member *member = root.addMember("firstMember");
+    Member &member = root.addMember("firstMember");
 
-    member->addData("CUBZOR", C);
-    member->addData("VECZOR", v);
-    member->addData("attr", 2);
+    member.addData("CUBZOR", C);
+    member.addData("VECZOR", v);
+    member.addData("attr", 2);
 
-    member->addData("lols", "heisann");
+    member.addData("lols", "heisann");
 
-    member->removeData("CUBZOR");
-    member->addData("CUBZOR", C);
+    member.removeData("CUBZOR");
+    member.addData("CUBZOR", C);
 
     return 0;
 
