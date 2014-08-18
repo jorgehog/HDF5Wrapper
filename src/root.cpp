@@ -6,6 +6,7 @@ using namespace H5;
 using namespace H5Wrapper;
 using namespace std;
 
+#include <hdf5.h>
 
 Root::Root(const std::string filename) :
     Member(NULL, ""),
@@ -47,7 +48,6 @@ void Root::initialize(const uint flag)
 
         m_group = new Group(m_file->openGroup("/"));
     }
-
 }
 
 void Root::finalize()

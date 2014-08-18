@@ -12,7 +12,6 @@ using namespace std;
 
 int main()
 {
-
     Root root("testfile.h5");
 
     root.initialize();
@@ -35,18 +34,41 @@ int main()
     imat mi;
 
     cube C(3, 3, 3, fill::randu);
-    vec v(10, fill::randn);
+    vec v = linspace(0, 100, 101);
 
-    Member *member = root.addMember("firstMember");
+    root.addData(12, 1337);
 
-    member->addData("CUBZOR", C);
-    member->addData("VECZOR", v);
-    member->addData("attr", 2);
+    Member &bror = root.addMember("bror", true);
 
-    member->addData("lols", "heisann");
+    bror.addData("CUBZOR", C);
+    bror.addData("VECZOR", v);
+    bror.addData("attr", 2);
 
-    member->removeData("CUBZOR");
-    member->addData("CUBZOR", C);
+    bror.addData("lols", "bror");
+
+    bror.removeData("CUBZOR");
+    bror.addData("CUBZOR", C);
+
+    Member &henrik = bror.addMember("HenrikAS", true);
+
+    icube henriksCube(10, 10, 10, fill::randn);
+
+    henrik.addData("minKube", henriksCube);
+
+    henrik.addData("Etternavn", "Sveinsson");
+
+    vector<string> lols = {"hei", "din", "penis"};
+
+    root.addData("hihihi", lols);
+
+    int *a = new int[2];
+    a[0] = 1;
+    a[1] = 2;
+
+    uint b[3][2] = {{2, 3}, {2, 3}, {2, 3}};
+
+    bror.addData("a", a, {2});
+    bror.addData("b", b, {3, 2});
 
     return 0;
 

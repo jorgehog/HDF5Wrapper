@@ -15,11 +15,20 @@
 using namespace arma;
 #endif
 
+#ifdef H5_USE_MPI
+#include <boost/mpi.hpp>
+namespace mpi = boost::mpi;
+#ifndef H5_MPI_MASTER
+#define H5_MPI_MASTER 0
+#endif
+#endif
+
 using std::string;
 using std::map;
 using std::vector;
 using std::set;
 using std::pair;
+using std::size_t;
 
 using H5::H5File;
 using H5::Group;
@@ -37,51 +46,11 @@ class Member
 {
 public:
 
-    Member(const Member *parent, const string ID) :
-        m_parent(parent),
-        m_ID(ID),
-        m_file(isRoot() ? NULL : parent->file())
-    {
+    Member(const Member *parent, const string ID);
 
-        if (!isRoot())
-        {
-            try
-            {
-                m_group = new Group(m_file->createGroup(absoluteName()));
-            }
-            catch(const H5::FileIException &)
-            {
-                m_group = new Group(m_file->openGroup(absoluteName()));
+    virtual ~Member();
 
-                _loadFromFile();
-            }
-        }
-
-    }
-
-    virtual ~Member()
-    {
-        for (auto &member : m_members)
-        {
-            delete member.second;
-        }
-
-        m_members.clear();
-        m_allSetKeys.clear();
-        m_allAttrKeys.clear();
-
-        delete m_group;
-    }
-
-    void finalize()
-    {
-        _dumpKeysToGroup();
-
-        for (auto & member : m_members)
-        {
-            member.second->finalize();
-        }
-    }
+    void finalize();
 
     bool isRoot() const
     {
@@ -113,28 +82,7 @@ public:
         return m_parent->absoluteName() + m_ID + "/";
     }
 
-    void purge()
-    {
-
-        for (const string &key : m_allAttrKeys)
-        {
-            m_group->removeAttr(key);
-        }
-
-        for (const string &key : m_allSetKeys)
-        {
-            m_group->unlink(key);
-        }
-
-        for (auto &member : m_members)
-        {
-            member.second->purge();
-        }
-
-        m_allAttrKeys.clear();
-        m_allSetKeys.clear();
-
-    }
+    void purge();
 
     template<typename kT>
     void removeData(const kT &_key)
@@ -183,16 +131,28 @@ public:
     }
 
     template<typename kT>
-    Member *addMember(const kT &_key) {
+    Member &addMember(const kT &_key, bool overWrite = false)
+    {
         string key = _stringify(_key);
 
-        BADAssBool(!hasMember(key), "Key already exists.");
+        if (overWrite)
+        {
+            if (hasMember(key))
+            {
+                removeMember(key);
+            }
+        }
+
+        else
+        {
+            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
+        }
 
         Member *newMember = new Member(this, key);
 
         m_members[key] = newMember;
 
-        return newMember;
+        return *newMember;
     }
 
     template<typename kT>
@@ -241,18 +201,25 @@ public:
     //Pointer is the main storage function. All others simply channel this one.
     template<typename kT, typename eT>
     typename std::enable_if<std::is_pointer<eT>::value, bool>::type
-    addData(const kT &_setname, const eT &data, const uint rank, hsize_t dims[])
+    addData(const kT &_setname, const eT &data, const vector<size_t> &dims)
     {
-        if (_notStorable(data, rank, dims))
+        if (_notStorable(data, dims))
         {
             return false;
         }
 
         string setname = _stringify(_setname);
+        const uint rank = dims.size();
+
+        hsize_t _dims[rank];
+        for (uint i = 0; i < rank; ++i)
+        {
+            _dims[i] = dims.at(i);
+        }
 
         try
         {
-            DataSet dataset(m_file->createDataSet(absoluteName() + setname, CToPredType<eT>::type(), DataSpace(rank, dims)));
+            DataSet dataset(m_file->createDataSet(absoluteName() + setname, CToPredType<eT>::type(), DataSpace(rank, _dims)));
             dataset.write(data, CToPredType<eT>::type());
             m_allSetKeys.insert(setname);
             return true;
@@ -268,9 +235,9 @@ public:
     //Static object.
     template<typename kT, typename eT>
     typename std::enable_if<!std::is_pointer<eT>::value && !std::is_integral<eT>::value, bool>::type
-    addData(const kT &setname, const eT &data, const uint rank, hsize_t dims[])
+    addData(const kT &setname, const eT &data, const vector<size_t> &dims)
     {
-        return addData(setname, &data, rank, dims);
+        return addData(setname, &data, dims);
     }
 
     //single std::string
@@ -297,16 +264,16 @@ public:
     //vector of std::strings
     template<typename kT>
     bool
-    addData(const kT &_setname, const string *data, const uint rank, hsize_t dims[])
+    addData(const kT &_setname, const string *data, const vector<size_t> &dims)
     {
-        if (_notStorable(data, rank, dims))
+        if (_notStorable(data, dims))
         {
             return false;
         }
 
         string setname = _stringify(_setname);
 
-        uint L = dims[0];
+        uint L = dims.at(0);
         string fullString("");
 
         string s;
@@ -339,7 +306,7 @@ public:
 
         try
         {
-            DataSet dataset(m_file->createDataSet(absoluteName() + setname, stringVecType, DataSpace(rank, newDims)));
+            DataSet dataset(m_file->createDataSet(absoluteName() + setname, stringVecType, DataSpace(1, newDims)));
             dataset.write(fullString.c_str(), stringVecType);
             m_allSetKeys.insert(setname);
             return true;
@@ -378,15 +345,13 @@ public:
     template<typename kT, typename eT>
     bool addData(const kT &setname, const vector<eT> &data)
     {
-        hsize_t dims[1] = {data.size()};
-        return addData(setname, data.front(), 1, dims);
+        return addData(setname, data.front(), {data.size()});
     }
 
     //std sets
     template<typename kT, typename eT>
     bool addData(const kT &setname, const set<eT> &data)
     {
-        hsize_t dims[1] = {data.size()};
         vector<eT> vectorOfSet(data.size());
 
         uint i = 0;
@@ -396,7 +361,7 @@ public:
             i++;
         }
 
-        return addData(setname, vectorOfSet.front(), 1, dims);
+        return addData(setname, vectorOfSet.front(), {data.size()});
     }
 
 
@@ -405,29 +370,25 @@ public:
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Col<eT> &data)
     {
-        hsize_t dims[1] = {data.n_elem};
-        return addData(setname, data.memptr(), 1, dims);
+        return addData(setname, data.memptr(), {data.n_elem});
     }
 
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Row<eT> &data)
     {
-        hsize_t dims[1] = {data.n_elem};
-        return addData(setname, data.memptr(), 1, dims);
+        return addData(setname, data.memptr(), {data.n_elem});
     }
 
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Mat<eT> &data)
     {
-        hsize_t dims[2] = {data.n_rows, data.n_cols};
-        return addData(setname, data.memptr(), 2, dims);
+        return addData(setname, data.memptr(),{data.n_rows, data.n_cols});
     }
 
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Cube<eT> &data)
     {
-        hsize_t dims[3] = {data.n_slices, data.n_rows, data.n_cols};
-        return addData(setname, data.memptr(), 3, dims);
+        return addData(setname, data.memptr(), {data.n_slices, data.n_rows, data.n_cols});
     }
 
 #endif
@@ -458,66 +419,45 @@ private:
         return string;
     }
 
-    void _dumpKeysToGroup()
-    {
-        addData("SetKeys", m_allSetKeys);
-        addData("AttrKeys", m_allAttrKeys);
-        addData("GroupKeys", _memberKeys());
-    }
+//    void _dumpKeysToGroup()
+//    {
+//        addData("SetKeys", m_allSetKeys);
+//        addData("AttrKeys", m_allAttrKeys);
+//        addData("GroupKeys", _memberKeys());
+//    }
 
-    vector<string> _memberKeys() const
-    {
-        vector<string> memberKeys(m_members.size());
+    vector<string> _memberKeys() const;
 
-        uint i = 0;
-        for (const auto &member : m_members)
-        {
-            memberKeys.at(i) = member.first;
-        }
-
-        return memberKeys;
-    }
-
-    bool _notStorable(const void *buffer, uint rank, hsize_t dims[]) const
-    {
-        //Zero rank, null buffer, or either dimension zero is not storable.
-
-        bool notStorable = (buffer == NULL) || (rank == 0);
-
-        for (uint i = 0; i < rank; ++i)
-        {
-            notStorable = notStorable || (dims[i] == 0);
-        }
-
-        return notStorable;
-    }
+    bool _notStorable(const void *buffer, const vector<size_t> &dims) const;
 
 protected:
 
     H5File *m_file;
     Group *m_group;
 
+//    static const mpi::environment env;
+//    static const mpi::communicator world;
+
     void _loadFromFile()
     {
-//        if (hasSet("AttrKeys"))
-//        {
-//            DataSet AttrKeys = m_file->openDataSet(absoluteName() + "AttrKeys");
-//            CompType StringVecType = AttrKeys.getCompType();
+        //        if (hasSet("AttrKeys"))
+        //        {
+        //            DataSet AttrKeys = m_file->openDataSet(absoluteName() + "AttrKeys");
+        //            CompType StringVecType = AttrKeys.getCompType();
 
-//            uint rank = 1;
-//            hsize_t dims[] = {1};
+        //            uint rank = 1;
+        //            hsize_t dims[] = {1};
 
-//            char* inputBuffer;
+        //            char* inputBuffer;
 
-//            AttrKeys.read(inputBuffer, StringVecType);
+        //            AttrKeys.read(inputBuffer, StringVecType);
 
-//            cout << inputBuffer << endl;
+        //            cout << inputBuffer << endl;
 
 
 
-//        }
+        //        }
     }
-
 };
 
 }

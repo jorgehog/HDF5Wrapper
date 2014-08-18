@@ -30,20 +30,37 @@ struct CToPredType<CTYPE> \
     PREDCONVERT(CTYPE*, HDF5TYPE) \
     PREDCONVERT(const CTYPE*, HDF5TYPE)
 
+#define WEIRD_TEST(ID, type, B) if (ID == string(typeid(type).name()).back()) return B
+
 namespace H5Wrapper
 {
 
-template<class T>
+template<typename T>
 struct CToPredType
 {
    static const AtomType type()
    {
-       BADAssBreak("Unsupported type.", [] ()
-       {
-            std::cerr << "Tried to store datatype " << typeid(T).name() << std::endl;
-       });
+       using std::string;
 
-       return PredType::NATIVE_B8;
+       string s = typeid(T).name();
+       char typeID = s.back();
+
+       WEIRD_TEST(typeID, short,              PredType::NATIVE_SHORT);
+       WEIRD_TEST(typeID, unsigned short,     PredType::NATIVE_USHORT);
+       WEIRD_TEST(typeID, int,                PredType::NATIVE_INT);
+       WEIRD_TEST(typeID, uint,               PredType::NATIVE_UINT);
+       WEIRD_TEST(typeID, long,               PredType::NATIVE_LONG);
+       WEIRD_TEST(typeID, unsigned long,      PredType::NATIVE_ULONG);
+       WEIRD_TEST(typeID, long long,          PredType::NATIVE_LLONG);
+       WEIRD_TEST(typeID, unsigned long long, PredType::NATIVE_ULLONG);
+       WEIRD_TEST(typeID, float,              PredType::NATIVE_FLOAT);
+       WEIRD_TEST(typeID, double,             PredType::NATIVE_DOUBLE);
+       WEIRD_TEST(typeID, long double,        PredType::NATIVE_LDOUBLE);
+       WEIRD_TEST(typeID, bool,               PredType::NATIVE_B8);
+
+       cerr << "Unable to deduce type " << typeid(T).name() << endl;
+
+       return PredType::NATIVE_CHAR;
    }
 };
 
