@@ -145,7 +145,7 @@ public:
 
         else
         {
-            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
+//            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
         }
 
         Member *newMember = new Member(this, key);
