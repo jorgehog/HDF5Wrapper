@@ -12,9 +12,9 @@ noarma {
     LIBS += -larmadillo
 }
 
-
 SOURCES += \
-    root.cpp
+    root.cpp \
+    member.cpp
 
 HEADERS += \
     ctopredtype.h \

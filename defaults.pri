@@ -10,6 +10,19 @@ INCLUDEPATH += $$PWD/utils
 
 COMMON_CXXFLAGS = -std=c++11
 
+
+mpi {
+    DEFINES += H5_USE_MPI
+    QMAKE_CXX = mpicxx
+
+    QMAKE_LINK = $$QMAKE_CXX
+
+    QMAKE_LFLAGS += $$system(mpicxx --showme:link)
+    COMMON_CXXFLAGS += $$system(mpicxx --showme:compile) -DMPICH_IGNORE_CXX_SEEK
+
+    LIBS += -lboost_mpi
+}
+
 QMAKE_CXXFLAGS += \
     $$COMMON_CXXFLAGS
 
