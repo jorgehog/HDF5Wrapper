@@ -154,10 +154,7 @@ public:
 
         else
         {
-            if (m_members.find(key) != m_members.end())
-            {
-                return *m_members[key];
-            }
+//            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
         }
 
         Member *newMember = new Member(this, key);
