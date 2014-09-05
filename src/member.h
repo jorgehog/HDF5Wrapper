@@ -172,7 +172,17 @@ public:
 
         BADAssBool(hasMember(key), "Member not found: " + key);
 
-        Member *member = m_members[key];
+
+        Member *member;
+
+        if (m_members.find(key) == m_members.end())
+        {
+            member = new Member(this, key);
+        }
+        else
+        {
+            member = m_members[key];
+        }
 
         member->purge();
 
