@@ -40,6 +40,40 @@ int main()
 
     Member &bror = root.addMember("bror", true);
 
+    uint N = 4;
+    uint D = 2;
+    uint S = 3;
+    mat testMatrix(N, D);
+    cube testCube(N, D, S);
+
+    if (bror.hasSet("test"))
+    {
+        bror.removeData("test");
+    }
+
+    if (bror.hasSet("testCube"))
+    {
+        bror.removeData("testCube");
+    }
+
+    for (uint i = 0; i < N; ++i)
+    {
+        for (uint d = 0; d < D; ++d)
+        {
+            testMatrix(i, d) = d + i;
+
+            for (uint s = 0; s < S; ++s)
+            {
+                testCube(i, d, s) = (d + i)*pow(10, s + 1);
+            }
+        }
+    }
+    cout << testCube << endl;
+
+
+    bror.addData("test", testMatrix);
+    bror.addData("testCube", testCube);
+
     bror.addData("CUBZOR", C);
     bror.addData("VECZOR", v);
     bror.addData("attr", 2);

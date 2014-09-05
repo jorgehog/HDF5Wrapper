@@ -382,7 +382,7 @@ public:
     template<typename kT, typename eT>
     bool addData(const kT &setname, const Mat<eT> &data)
     {
-        return addData(setname, data.memptr(),{data.n_rows, data.n_cols});
+        return addData(setname, data.memptr(),{data.n_cols, data.n_rows});
     }
 
     template<typename kT, typename eT>
