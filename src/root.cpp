@@ -8,24 +8,24 @@ using namespace std;
 
 #include <hdf5.h>
 
-Root::Root(const std::string filename) :
+Root::Root(const std::string filename, const uint flag) :
     Member(NULL, ""),
     m_filename(filename),
-    m_state(state::OPEN)
+    m_state(state::CLOSED)
 {
-
+    _initialize(flag);
 }
 
 Root::~Root()
 {
     if (m_state == state::OPEN)
     {
-        finalize();
+        _finalize();
     }
 }
 
 
-void Root::initialize(const uint flag)
+void Root::_initialize(const uint flag)
 {
     Exception::dontPrint();
 
@@ -50,7 +50,7 @@ void Root::initialize(const uint flag)
     }
 }
 
-void Root::finalize()
+void Root::_finalize()
 {
     Member::finalize();
 

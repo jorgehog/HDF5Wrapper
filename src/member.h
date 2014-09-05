@@ -110,7 +110,16 @@ public:
     {
         string key = _stringify(_key);
 
-        return m_members.find(key) != m_members.end();
+        try
+        {
+            m_file->openGroup(absoluteName() + key);
+            return true;
+        }
+
+        catch(const H5::FileIException &)
+        {
+            return false;
+        }
     }
 
     template<typename kT>
@@ -145,7 +154,7 @@ public:
 
         else
         {
-            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
+//            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
         }
 
         Member *newMember = new Member(this, key);
@@ -158,6 +167,7 @@ public:
     template<typename kT>
     void removeMember(const kT &_key)
     {
+
         string key = _stringify(_key);
 
         BADAssBool(hasMember(key), "Member not found: " + key);
@@ -323,9 +333,10 @@ public:
     //integral types
     template<typename kT, typename eT>
     typename std::enable_if<std::is_integral<eT>::value, bool>::type
-    addData(const kT &_attrname, const eT data)
+    addData(const kT &_attrname, const eT &data)
     {
         string attrname = _stringify(_attrname);
+        cout << attrname << endl;
 
         try
         {

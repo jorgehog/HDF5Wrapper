@@ -14,8 +14,6 @@ int main()
 {
     Root root("testfile.h5");
 
-    root.initialize();
-
     srand(time(NULL));
 
     uint nMembers = 3;

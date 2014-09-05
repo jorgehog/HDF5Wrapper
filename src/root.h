@@ -13,18 +13,10 @@ class Root : public Member
 {
 public:
 
-    Root(const string filename);
+    Root(const string filename, const uint flag = H5F_ACC_RDWR);
 
     virtual ~Root();
 
-    void initialize(const uint flag);
-
-    void initialize()
-    {
-        initialize(H5F_ACC_RDWR);
-    }
-
-    void finalize();
 
     enum class state
     {
@@ -39,6 +31,8 @@ private:
 
     state m_state;
 
+    void _finalize();
+    void _initialize(const uint flag);
     void _onFileOpen();
 
 };
