@@ -221,7 +221,7 @@ public:
     //Pointer is the main storage function. All others simply channel this one.
     template<typename kT, typename eT>
     typename std::enable_if<std::is_pointer<eT>::value, bool>::type
-    addData(const kT &_setname, const eT &data, const vector<size_t> &dims)
+    addData(const kT &_setname, const eT &data, const vector<size_t> &dims, bool overWrite = false)
     {
         if (_notStorable(data, dims))
         {
@@ -246,6 +246,12 @@ public:
         }
         catch (const H5::FileIException &)
         {
+            if (overWrite)
+            {
+                removeData(_setname);
+                return addData(_setname, data, dims, false);
+            }
+
             m_allSetKeys.insert(setname);
             return false;
         }
@@ -255,15 +261,15 @@ public:
     //Static object.
     template<typename kT, typename eT>
     typename std::enable_if<!std::is_pointer<eT>::value && !std::is_integral<eT>::value, bool>::type
-    addData(const kT &setname, const eT &data, const vector<size_t> &dims)
+    addData(const kT &setname, const eT &data, const vector<size_t> &dims, bool overWrite = false)
     {
-        return addData(setname, &data, dims);
+        return addData(setname, &data, dims, overWrite);
     }
 
     //single std::string
     template<typename kT>
     bool
-    addData(const kT &_attrname, const string &data)
+    addData(const kT &_attrname, const string &data, bool overWrite = false)
     {
         string attrname = _stringify(_attrname);
 
@@ -276,6 +282,12 @@ public:
         }
         catch(const H5::AttributeIException &)
         {
+            if (overWrite)
+            {
+                removeData(_attrname);
+                return addData(_attrname, data, false);
+            }
+
             m_allAttrKeys.insert(attrname);
             return false;
         }
@@ -284,7 +296,7 @@ public:
     //vector of std::strings
     template<typename kT>
     bool
-    addData(const kT &_setname, const string *data, const vector<size_t> &dims)
+    addData(const kT &_setname, const string *data, const vector<size_t> &dims, bool overWrite = false)
     {
         if (_notStorable(data, dims))
         {
@@ -333,6 +345,12 @@ public:
         }
         catch (const H5::FileIException &)
         {
+            if (overWrite)
+            {
+                removeData(_setname);
+                return addData(_setname, data, dims, false);
+            }
+
             m_allSetKeys.insert(setname);
             return false;
         }
@@ -343,10 +361,9 @@ public:
     //integral types
     template<typename kT, typename eT>
     typename std::enable_if<std::is_integral<eT>::value, bool>::type
-    addData(const kT &_attrname, const eT &data)
+    addData(const kT &_attrname, const eT &data, bool overWrite = false)
     {
         string attrname = _stringify(_attrname);
-        cout << attrname << endl;
 
         try
         {
@@ -357,6 +374,12 @@ public:
         }
         catch(const H5::AttributeIException &)
         {
+            if (overWrite)
+            {
+                removeData(_attrname);
+                return addData(_attrname, data, false);
+            }
+
             m_allAttrKeys.insert(attrname);
             return false;
         }
@@ -364,14 +387,14 @@ public:
 
     //std vectors
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const vector<eT> &data)
+    bool addData(const kT &setname, const vector<eT> &data, bool overWrite = false)
     {
-        return addData(setname, data.front(), {data.size()});
+        return addData(setname, data.front(), {data.size()}, overWrite);
     }
 
     //std sets
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const set<eT> &data)
+    bool addData(const kT &setname, const set<eT> &data, bool overWrite = false)
     {
         vector<eT> vectorOfSet(data.size());
 
@@ -382,34 +405,34 @@ public:
             i++;
         }
 
-        return addData(setname, vectorOfSet.front(), {data.size()});
+        return addData(setname, vectorOfSet.front(), {data.size()}, overWrite);
     }
 
 
     //Armadillo objects can be disabled.
 #ifndef HDF5_NO_ARMA
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const Col<eT> &data)
+    bool addData(const kT &setname, const Col<eT> &data, bool overWrite = false)
     {
-        return addData(setname, data.memptr(), {data.n_elem});
+        return addData(setname, data.memptr(), {data.n_elem}, overWrite);
     }
 
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const Row<eT> &data)
+    bool addData(const kT &setname, const Row<eT> &data, bool overWrite = false)
     {
-        return addData(setname, data.memptr(), {data.n_elem});
+        return addData(setname, data.memptr(), {data.n_elem}, overWrite);
     }
 
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const Mat<eT> &data)
+    bool addData(const kT &setname, const Mat<eT> &data, bool overWrite = false)
     {
-        return addData(setname, data.memptr(),{data.n_cols, data.n_rows});
+        return addData(setname, data.memptr(),{data.n_cols, data.n_rows}, overWrite);
     }
 
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const Cube<eT> &data)
+    bool addData(const kT &setname, const Cube<eT> &data, bool overWrite = false)
     {
-        return addData(setname, data.memptr(), {data.n_slices, data.n_rows, data.n_cols});
+        return addData(setname, data.memptr(), {data.n_slices, data.n_rows, data.n_cols}, overWrite);
     }
 
 #endif
