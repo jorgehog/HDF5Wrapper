@@ -360,7 +360,7 @@ public:
 
     //integral types
     template<typename kT, typename eT>
-    typename std::enable_if<std::is_integral<eT>::value, bool>::type
+    typename std::enable_if<std::is_arithmetic<eT>::value, bool>::type
     addData(const kT &_attrname, const eT &data, bool overWrite = false)
     {
         string attrname = _stringify(_attrname);

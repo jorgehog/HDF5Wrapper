@@ -74,7 +74,7 @@ int main()
 
     bror.addData("CUBZOR", C);
     bror.addData("VECZOR", v);
-    bror.addData("attr", 2);
+    bror.addData("attr", 2.0);
 
     bror.addData("lols", "bror");
 
