@@ -154,7 +154,7 @@ public:
 
         else
         {
-//            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
+            //            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
         }
 
         Member *newMember = new Member(this, key);
@@ -218,6 +218,126 @@ public:
         return m_members[key];
     }
 
+    template<typename kT, typename eT>
+    void
+    readData(const kT &_setname, eT *data)
+    {
+        string setname = _stringify(_setname);
+
+        if (group()->attrExists(setname))
+        {
+            _readAttr(setname, data);
+        }
+
+        else if (hasSet(setname))
+        {
+            _readDataSet(setname, data);
+        }
+        else
+        {
+            BADAssBreak("No such data.");
+        }
+
+    }
+
+    template<typename kT>
+    vector<hsize_t> getDims(const kT &_setname)
+    {
+        string setname = _stringify(_setname);
+
+        const DataSet &dataset = group()->openDataSet(setname);
+
+        const DataSpace &dataspace = dataset.getSpace();
+
+        hsize_t rank = dataspace.getSimpleExtentNdims();
+
+        hsize_t dims[rank];
+
+        dataspace.getSimpleExtentDims(dims);
+
+        vector<hsize_t> _dims(rank);
+
+        for (uint i = 0; i < rank; ++i)
+        {
+            _dims[i] = dims[i];
+        }
+
+        return _dims;
+
+    }
+
+    template<typename kT, typename eT>
+    void
+    readData(const kT &_setname, vector<eT> &data)
+    {
+        auto dims = getDims(_setname);
+
+        uint size = dims[0];
+        eT mem[size];
+        data.resize(size);
+
+        readData(_setname, &mem[0]);
+
+        for (uint i = 0; i < size; ++i)
+        {
+            data.at(i) = mem[i];
+        }
+    }
+
+    template<typename kT>
+    void
+    readData(const kT &_setname, vector<string> &data)
+    {
+
+        string setname = _stringify(_setname);
+
+        const DataSet &dataset = group()->openDataSet(setname);
+        CompType stringVecType = dataset.getCompType();
+
+        uint totalSize = stringVecType.getSize();
+        uint nStrings = stringVecType.getNmembers();
+
+        data.resize(nStrings);
+
+        char mem[totalSize];
+
+        dataset.read(mem, stringVecType);
+
+        string fullstring = mem;
+
+        uint offset = 0;
+        for (uint i = 0; i < nStrings; ++i)
+        {
+            H5::StrType stringType = stringVecType.getMemberStrType(i);
+
+            uint subStringSize = stringType.getSize();
+
+            string substr = fullstring.substr(offset, subStringSize);
+
+            data.at(i) = substr;
+
+            offset += subStringSize;
+        }
+    }
+
+    template<typename eT>
+    void
+    _readAttr(const string setname, eT *data)
+    {
+        const Attribute &attr = group()->openAttribute(setname);
+        attr.read(CToPredType<eT>::type(), CPredTypeRef<eT>::ptr(data));
+    }
+
+    template<typename eT>
+    void
+    _readDataSet(const string setname, eT *data)
+    {
+        const DataSet &dataset = group()->openDataSet(setname);
+
+        dataset.read(CPredTypeRef<eT>::ptr(data), dataset.getCompType());
+
+    }
+
     //Pointer is the main storage function. All others simply channel this one.
     template<typename kT, typename eT>
     typename std::enable_if<std::is_pointer<eT>::value, bool>::type
@@ -240,7 +360,9 @@ public:
         try
         {
             DataSet dataset(m_file->createDataSet(absoluteName() + setname, CToPredType<eT>::type(), DataSpace(rank, _dims)));
+
             dataset.write(data, CToPredType<eT>::type());
+
             m_allSetKeys.insert(setname);
             return true;
         }
@@ -260,37 +382,10 @@ public:
 
     //Static object.
     template<typename kT, typename eT>
-    typename std::enable_if<!std::is_pointer<eT>::value && !std::is_integral<eT>::value, bool>::type
+    typename std::enable_if<!std::is_pointer<eT>::value, bool>::type
     addData(const kT &setname, const eT &data, const vector<size_t> &dims, bool overWrite = false)
     {
         return addData(setname, &data, dims, overWrite);
-    }
-
-    //single std::string
-    template<typename kT>
-    bool
-    addData(const kT &_attrname, const string &data, bool overWrite = false)
-    {
-        string attrname = _stringify(_attrname);
-
-        try
-        {
-            Attribute attr(m_group->createAttribute(attrname, CToPredType<char*>::type(data.size()), H5S_SCALAR));
-            attr.write(CToPredType<char*>::type(data.size()), data.c_str());
-            m_allAttrKeys.insert(attrname);
-            return true;
-        }
-        catch(const H5::AttributeIException &)
-        {
-            if (overWrite)
-            {
-                removeData(_attrname);
-                return addData(_attrname, data, false);
-            }
-
-            m_allAttrKeys.insert(attrname);
-            return false;
-        }
     }
 
     //vector of std::strings
@@ -357,10 +452,9 @@ public:
 
     }
 
-
-    //integral types
+    //attributes
     template<typename kT, typename eT>
-    typename std::enable_if<std::is_arithmetic<eT>::value, bool>::type
+    bool
     addData(const kT &_attrname, const eT &data, bool overWrite = false)
     {
         string attrname = _stringify(_attrname);
@@ -368,7 +462,7 @@ public:
         try
         {
             Attribute attr(m_group->createAttribute(attrname, CToPredType<eT>::type(), H5S_SCALAR));
-            attr.write(CToPredType<eT>::type(), &data);
+            attr.write(CToPredType<eT>::type(), CPredTypeRef<eT>::ref(data));
             m_allAttrKeys.insert(attrname);
             return true;
         }
@@ -463,12 +557,12 @@ private:
         return string;
     }
 
-//    void _dumpKeysToGroup()
-//    {
-//        addData("SetKeys", m_allSetKeys);
-//        addData("AttrKeys", m_allAttrKeys);
-//        addData("GroupKeys", _memberKeys());
-//    }
+    //    void _dumpKeysToGroup()
+    //    {
+    //        addData("SetKeys", m_allSetKeys);
+    //        addData("AttrKeys", m_allAttrKeys);
+    //        addData("GroupKeys", _memberKeys());
+    //    }
 
     vector<string> _memberKeys() const;
 
@@ -479,8 +573,8 @@ protected:
     H5File *m_file;
     Group *m_group;
 
-//    static const mpi::environment env;
-//    static const mpi::communicator world;
+    //    static const mpi::environment env;
+    //    static const mpi::communicator world;
 
     void _loadFromFile()
     {

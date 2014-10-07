@@ -36,6 +36,34 @@ namespace H5Wrapper
 {
 
 template<typename T>
+struct CPredTypeRef
+{
+    static const T* ref(const T& _obj)
+    {
+        return &_obj;
+    }
+
+    static T* ptr(T* _obj)
+    {
+        return _obj;
+    }
+};
+
+template<>
+struct CPredTypeRef<string>
+{
+    static const string& ref(const string& _obj)
+    {
+        return _obj;
+    }
+
+    static string& ptr(string* _obj)
+    {
+        return *_obj;
+    }
+};
+
+template<typename T>
 struct CToPredType
 {
    static const AtomType type()
@@ -88,6 +116,7 @@ TYPECONVERTSUITE(float,              PredType::NATIVE_FLOAT)
 TYPECONVERTSUITE(double,             PredType::NATIVE_DOUBLE)
 TYPECONVERTSUITE(long double,        PredType::NATIVE_LDOUBLE)
 TYPECONVERTSUITE(bool,               PredType::NATIVE_B8)
+TYPECONVERTSUITE(std::string,        StrType(PredType::C_S1, 256))
 
 //all H* types are redefinitions of C-types.
 
