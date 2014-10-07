@@ -37,6 +37,7 @@ void Root::_initialize(const uint flag)
         m_group = new Group(m_file->openGroup("/"));
 
         _loadFromFile();
+
     }
     catch (const FileIException &exc)
     {

@@ -43,7 +43,6 @@ struct _defvalue<string>
 template<typename T>
 void saveMe(Member &member, string id, T value)
 {
-    cout << "dumping " << id << " : " << value << endl;
     member.addData(id, value, true);
 }
 
@@ -52,12 +51,12 @@ T readMe(Member &member, string id)
 {
     T value;
 
-
-    cout << "read " << id << " : ";
-
     member.readData(id, &value);
 
-    cout << value << endl;
+    if (value != _defvalue<T>::value())
+    {
+        cerr << value << " != " << _defvalue<T>::value() << endl;
+    }
 
     return value;
 
@@ -69,9 +68,6 @@ void saveVectorMe(Member &member, string id, vector<T> value)
 {
     id += "vec";
 
-    cout << "dumping " << id << " : ";
-    cout << value.at(0) << " " << value.at(1) << " " << value.at(2) << " " << endl;
-
     member.addData(id, value, true);
 }
 
@@ -80,13 +76,19 @@ vector<T> readVectorMe(Member &member, string id)
 {
     id += "vec";
 
-    cout << "read " << id << " : ";
-
     vector<T> value;
 
     member.readData(id, value);
 
-    cout << value.at(0) << "   " << value.at(1) << "   " << value.at(2) << endl;
+    vector<T> defs = _defvalue<T>::vectorValues();
+
+    for (uint i = 0; i < defs.size(); ++i)
+    {
+        if (defs.at(i) != value.at(i))
+        {
+            cerr << id << " " << i << " " << defs.at(i) << " != " << value.at(i) << endl;
+        }
+    }
 
     return value;
 
@@ -103,6 +105,10 @@ int main()
     Root root("testfile.h5");
 
     srand(time(NULL));
+
+    Member &mjau = root.addMember("mjau");
+    mjau.addData("hei", _defvalue<int>::vectorValues());
+    mjau.addMember("dust").addData("du", _defvalue<double>::vectorValues());
 
     //Scalars
 

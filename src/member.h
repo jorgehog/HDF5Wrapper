@@ -89,18 +89,18 @@ public:
     {
         string key = _stringify(_key);
 
-        BADAssBool(m_group->attrExists(key) || hasSet(key), "Data doesn't exist.");
+        BADAssBool(m_group->attrExists(key) || hasDataset(key), "Data doesn't exist.");
 
-        if (m_group->attrExists(key))
+        if (hasAttribute(key))
         {
             m_group->removeAttr(key);
-            m_allAttrKeys.erase(key);
+            m_attributes.erase(key);
         }
 
-        if (hasSet(key))
+        if (hasDataset(key))
         {
             m_group->unlink(key);
-            m_allSetKeys.erase(key);
+            m_datasets.erase(key);
         }
 
     }
@@ -110,51 +110,33 @@ public:
     {
         string key = _stringify(_key);
 
-        try
-        {
-            m_file->openGroup(absoluteName() + key);
-            return true;
-        }
-
-        catch(const H5::FileIException &)
-        {
-            return false;
-        }
+        return m_members.find(key) != m_members.end();
     }
 
     template<typename kT>
-    bool hasSet(const kT &_key) const
+    bool hasDataset(const kT &_key) const
     {
         string key = _stringify(_key);
 
-        try
-        {
-            m_group->openDataSet(key);
-            return true;
-        }
-        catch (const H5::GroupIException &)
-        {
-            return false;
-        }
-
+        return m_datasets.find(key) != m_datasets.end();
     }
 
     template<typename kT>
-    Member &addMember(const kT &_key, bool overWrite = false)
+    bool hasAttribute(const kT &_key) const
     {
         string key = _stringify(_key);
 
-        if (overWrite)
-        {
-            if (hasMember(key))
-            {
-                removeMember(key);
-            }
-        }
+        return m_attributes.find(key) != m_attributes.end();
+    }
 
-        else
+    template<typename kT>
+    Member &addMember(const kT &_key)
+    {
+        string key = _stringify(_key);
+
+        if (hasMember(key))
         {
-            //            BADAssBool(hasMember(key), "Key already exists. Did you mean to overwrite?");
+            return *m_members[key];
         }
 
         Member *newMember = new Member(this, key);
@@ -173,16 +155,7 @@ public:
         BADAssBool(hasMember(key), "Member not found: " + key);
 
 
-        Member *member;
-
-        if (m_members.find(key) == m_members.end())
-        {
-            member = new Member(this, key);
-        }
-        else
-        {
-            member = m_members[key];
-        }
+        Member *member = m_members[key];
 
         member->purge();
 
@@ -229,7 +202,7 @@ public:
             _readAttr(setname, data);
         }
 
-        else if (hasSet(setname))
+        else if (hasDataset(setname))
         {
             _readDataSet(setname, data);
         }
@@ -363,7 +336,7 @@ public:
 
             dataset.write(data, CToPredType<eT>::type());
 
-            m_allSetKeys.insert(setname);
+            m_datasets.insert(setname);
             return true;
         }
         catch (const H5::FileIException &)
@@ -374,7 +347,7 @@ public:
                 return addData(_setname, data, dims, false);
             }
 
-            m_allSetKeys.insert(setname);
+            m_datasets.insert(setname);
             return false;
         }
 
@@ -435,7 +408,7 @@ public:
         {
             DataSet dataset(m_file->createDataSet(absoluteName() + setname, stringVecType, DataSpace(1, newDims)));
             dataset.write(fullString.c_str(), stringVecType);
-            m_allSetKeys.insert(setname);
+            m_datasets.insert(setname);
             return true;
         }
         catch (const H5::FileIException &)
@@ -446,7 +419,7 @@ public:
                 return addData(_setname, data, dims, false);
             }
 
-            m_allSetKeys.insert(setname);
+            m_datasets.insert(setname);
             return false;
         }
 
@@ -463,7 +436,7 @@ public:
         {
             Attribute attr(m_group->createAttribute(attrname, CToPredType<eT>::type(), H5S_SCALAR));
             attr.write(CToPredType<eT>::type(), CPredTypeRef<eT>::ref(data));
-            m_allAttrKeys.insert(attrname);
+            m_attributes.insert(attrname);
             return true;
         }
         catch(const H5::AttributeIException &)
@@ -474,7 +447,7 @@ public:
                 return addData(_attrname, data, false);
             }
 
-            m_allAttrKeys.insert(attrname);
+            m_attributes.insert(attrname);
             return false;
         }
     }
@@ -531,16 +504,47 @@ public:
 
 #endif
 
+    void _iterate()
+    {
+        m_info.index++;
+    }
+
+    const int &iter_index() const
+    {
+        return m_info.index;
+    }
+
+    void _registerDataset(string name)
+    {
+        m_datasets.insert(name);
+    }
+
+    void _registerAttribute(string name)
+    {
+        m_attributes.insert(name);
+    }
+
+    const set<string> &datasets() const
+    {
+        return m_datasets;
+    }
+
+    const set<string> &attributes() const
+    {
+        return m_attributes;
+    }
+
 private:
 
     const Member *m_parent;
 
     const string m_ID;
 
+    set<string> m_datasets;
+    set<string> m_attributes;
+
     map<string, Member*> m_members;
 
-    set<string> m_allSetKeys;
-    set<string> m_allAttrKeys;
 
     template<typename T>
     static string _stringify(const T &nonString)
@@ -557,44 +561,85 @@ private:
         return string;
     }
 
-    //    void _dumpKeysToGroup()
-    //    {
-    //        addData("SetKeys", m_allSetKeys);
-    //        addData("AttrKeys", m_allAttrKeys);
-    //        addData("GroupKeys", _memberKeys());
-    //    }
-
-    vector<string> _memberKeys() const;
-
     bool _notStorable(const void *buffer, const vector<size_t> &dims) const;
+
 
 protected:
 
     H5File *m_file;
     Group *m_group;
 
-    //    static const mpi::environment env;
-    //    static const mpi::communicator world;
+    static herr_t _loadGroupAndDataset(hid_t loc_id, const char *name, void *opdata)
+    {
+        Member *member=(Member *)opdata;
+
+        int obj_type = H5Gget_objtype_by_idx(loc_id, member->iter_index());
+
+        if(obj_type == H5G_GROUP)
+        {
+            member->addMember(name);
+        }
+        else if (obj_type == H5G_DATASET)
+        {
+            member->_registerDataset(name);
+        }
+        else
+        {
+            cerr << "unsupported datatype " << name << endl;
+        }
+
+        member->_iterate();
+        return 0;
+    }
+
+    static herr_t _loadAttr(hid_t location_id, const char *attr_name, const H5A_info_t *ainfo, void *op_dat)
+    {
+        (void) ainfo;
+        (void) location_id;
+
+        Member *member=(Member *)op_dat;
+
+        member->_registerAttribute(attr_name);
+
+        return 0;
+
+    }
+
+    struct iter_info
+    {
+        int index = 0;
+    } m_info;
 
     void _loadFromFile()
     {
-        //        if (hasSet("AttrKeys"))
-        //        {
-        //            DataSet AttrKeys = m_file->openDataSet(absoluteName() + "AttrKeys");
-        //            CompType StringVecType = AttrKeys.getCompType();
+        m_file->iterateElems(absoluteName(), NULL, Member::_loadGroupAndDataset, this);
 
-        //            uint rank = 1;
-        //            hsize_t dims[] = {1};
+        H5Aiterate(m_group->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, NULL, Member::_loadAttr, this);
 
-        //            char* inputBuffer;
+        cout << absoluteName() << endl;
+        cout << "datasets: ";
+        for (string s : datasets())
+        {
+            cout << s << " - ";
+        }
+        cout << endl;
 
-        //            AttrKeys.read(inputBuffer, StringVecType);
+        cout << "Attributes: ";
+        for (string s : attributes())
+        {
+            cout << s << " - ";
+        }
+        cout << endl;
 
-        //            cout << inputBuffer << endl;
+        cout << "Members: ";
+        for (const auto & member : m_members)
+        {
+            cout << member.second->ID() << " - ";
+        }
+        cout << endl;
 
+        cout << "---------------------" << endl;
 
-
-        //        }
     }
 };
 
