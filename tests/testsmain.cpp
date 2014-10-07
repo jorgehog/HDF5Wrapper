@@ -170,5 +170,11 @@ int main()
     READVECTORTYPE(bool, root);
     READVECTORTYPE(string, root);
 
+    //TEST: static write + read;
+    //TEST: Armadillo write + read
+    //TEST: member add
+    //TEST: all types remove.
+    //TEST: member purge.
+
     return 0;
 }
