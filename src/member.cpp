@@ -27,24 +27,7 @@ Member::Member(const Member *parent, const string ID) :
 
 Member::~Member()
 {
-    for (auto &member : m_members)
-    {
-        delete member.second;
-    }
-
-    m_members.clear();
-    m_datasets.clear();
-    m_attributes.clear();
-
-    delete m_group;
-}
-
-void Member::finalize()
-{
-    for (auto & member : m_members)
-    {
-        member.second->finalize();
-    }
+    _clearall();
 }
 
 void Member::purge()
@@ -82,4 +65,22 @@ bool Member::_notStorable(const void *buffer, const vector<size_t> &dims) const
     }
 
     return notStorable;
+}
+
+void Member::_clearall()
+{
+    for (auto &member : m_members)
+    {
+        delete member.second;
+    }
+
+    m_members.clear();
+    m_datasets.clear();
+    m_attributes.clear();
+
+    if (m_group != NULL)
+    {
+        delete m_group;
+        m_group = NULL;
+    }
 }

@@ -50,8 +50,6 @@ public:
 
     virtual ~Member();
 
-    void finalize();
-
     bool isRoot() const
     {
         return m_parent == NULL;
@@ -564,10 +562,13 @@ private:
     bool _notStorable(const void *buffer, const vector<size_t> &dims) const;
 
 
+
 protected:
 
     H5File *m_file;
     Group *m_group;
+
+    void _clearall();
 
     static herr_t _loadGroupAndDataset(hid_t loc_id, const char *name, void *opdata)
     {
@@ -585,7 +586,7 @@ protected:
         }
         else
         {
-            cerr << "unsupported datatype " << name << endl;
+            cerr << "unsupported datatype " << name << " " << obj_type << endl;
         }
 
         member->_iterate();

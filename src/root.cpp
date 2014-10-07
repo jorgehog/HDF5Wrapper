@@ -13,20 +13,22 @@ Root::Root(const std::string filename, const uint flag) :
     m_filename(filename),
     m_state(state::CLOSED)
 {
-    _initialize(flag);
+    open(flag);
 }
 
 Root::~Root()
 {
-    if (m_state == state::OPEN)
-    {
-        _finalize();
-    }
+    close();
 }
 
 
-void Root::_initialize(const uint flag)
+void Root::open(const uint flag)
 {
+    if (m_state == state::OPEN)
+    {
+        return;
+    }
+
     Exception::dontPrint();
 
     try
@@ -49,13 +51,27 @@ void Root::_initialize(const uint flag)
 
         m_group = new Group(m_file->openGroup("/"));
     }
+
+    m_state = state::OPEN;
 }
 
-void Root::_finalize()
+void Root::flush()
 {
-    Member::finalize();
+    H5Fflush(m_group->getId(), H5F_SCOPE_GLOBAL);
+}
 
-    delete m_file;
-    m_state = state::CLOSED;
+void Root::close()
+{
+    if (m_state == state::OPEN)
+    {
+        flush();
+
+        _clearall();
+
+        m_file->close();
+        delete m_file;
+
+        m_state = state::CLOSED;
+    }
 }
 

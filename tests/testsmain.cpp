@@ -106,10 +106,6 @@ int main()
 
     srand(time(NULL));
 
-    Member &mjau = root.addMember("mjau");
-    mjau.addData("hei", _defvalue<int>::vectorValues());
-    mjau.addMember("dust").addData("du", _defvalue<double>::vectorValues());
-
     //Scalars
 
     DUMPTYPE(short, root);
@@ -126,6 +122,7 @@ int main()
     DUMPTYPE(bool, root);
     DUMPTYPE(string, root);
 
+    root.flush();
 
     READTYPE(short, root);
     READTYPE(unsigned short, root);
@@ -157,8 +154,7 @@ int main()
     DUMPVECTORTYPE(bool, root);
     DUMPVECTORTYPE(string, root);
 
-
-    H5Fflush(root.group()->getId(), H5F_SCOPE_GLOBAL);
+    root.flush();
 
     READVECTORTYPE(short, root);
     READVECTORTYPE(unsigned short, root);
@@ -172,10 +168,7 @@ int main()
     READVECTORTYPE(double, root);
     READVECTORTYPE(long double, root);
     READVECTORTYPE(bool, root);
-    READVECTORTYPE(string, root); // THIS IS BROKEN ATM
-
-    //ITERATE: ftp://www.hdfgroup.org/HDF5/examples/misc-examples/h5grpnam.cpp
-
+    READVECTORTYPE(string, root);
 
     return 0;
 }

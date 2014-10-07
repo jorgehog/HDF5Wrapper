@@ -24,6 +24,9 @@ public:
         CLOSED
     };
 
+    void close();
+    void open(const uint flag = H5F_ACC_RDWR);
+    void flush();
 
 private:
 
@@ -31,9 +34,6 @@ private:
 
     state m_state;
 
-    void _finalize();
-    void _initialize(const uint flag);
-    void _onFileOpen();
 
 };
 
