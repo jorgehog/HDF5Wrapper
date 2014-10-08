@@ -55,11 +55,6 @@ void Root::open(const uint flag)
     m_state = state::OPEN;
 }
 
-void Root::flush()
-{
-    H5Fflush(m_group->getId(), H5F_SCOPE_GLOBAL);
-}
-
 void Root::close()
 {
     if (m_state == state::OPEN)

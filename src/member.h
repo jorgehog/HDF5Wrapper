@@ -80,6 +80,8 @@ public:
         return m_parent->absoluteName() + m_ID + "/";
     }
 
+    void flush();
+
     void purge();
 
     template<typename kT>
@@ -147,7 +149,6 @@ public:
     template<typename kT>
     void removeMember(const kT &_key)
     {
-
         string key = _stringify(_key);
 
         BADAssBool(hasMember(key), "Member not found: " + key);
@@ -157,7 +158,10 @@ public:
 
         member->purge();
 
+        m_group->unlink(key);
+
         delete member;
+        member = NULL;
 
         m_members.erase(key);
     }
@@ -165,6 +169,11 @@ public:
     void removeMember(Member *member)
     {
         removeMember(member->ID());
+    }
+
+    void removeMember(Member &member)
+    {
+        removeMember(&member);
     }
 
     template<typename kT>
@@ -290,6 +299,7 @@ public:
             offset += subStringSize;
         }
     }
+
 
     template<typename eT>
     void
@@ -500,6 +510,67 @@ public:
         return addData(setname, data.memptr(), {data.n_slices, data.n_rows, data.n_cols}, overWrite);
     }
 
+    template<typename kT, typename eT>
+    void
+    readData(const kT &_setname, Col<eT> &data)
+    {
+       vector<hsize_t> dims = getDims(_setname);
+       const uint &N = dims[0];
+
+       eT* mem = new eT[N];
+
+       readData(_setname, mem);
+
+       data = Col<eT>(mem, N, false, true); //strict true to avoid memory leakage.
+    }
+
+    template<typename kT, typename eT>
+    void
+    readData(const kT &_setname, Row<eT> &data)
+    {
+        vector<hsize_t> dims = getDims(_setname);
+        const uint &N = dims[0];
+
+        eT* mem = new eT[N];
+
+        readData(_setname, mem);
+
+        data = Row<eT>(mem, N, false, true); //strict true to avoid memory leakage.
+    }
+
+    template<typename kT, typename eT>
+    void
+    readData(const kT &_setname, Mat<eT> &data)
+    {
+        vector<hsize_t> dims = getDims(_setname);
+
+        const uint &NY = dims[0];
+        const uint &NX = dims[1];
+
+        eT* mem = new eT[NX*NY];
+
+        readData(_setname, mem);
+
+        data = Mat<eT>(mem, NX, NY, false, true); //strict true to avoid memory leakage.
+    }
+
+    template<typename kT, typename eT>
+    void
+    readData(const kT &_setname, Cube<eT> &data)
+    {
+        vector<hsize_t> dims = getDims(_setname);
+
+        const uint &NZ = dims[0];
+        const uint &NX = dims[1];
+        const uint &NY = dims[2];
+
+        eT* mem = new eT[NX*NY*NZ];
+
+        readData(_setname, mem);
+
+        data = Cube<eT>(mem, NX, NY, NZ, false, true); //strict true to avoid memory leakage.
+    }
+
 #endif
 
     void _iterate()
@@ -530,6 +601,11 @@ public:
     const set<string> &attributes() const
     {
         return m_attributes;
+    }
+
+    const map<string, Member*> &members() const
+    {
+        return m_members;
     }
 
 private:
@@ -617,29 +693,29 @@ protected:
 
         H5Aiterate(m_group->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, NULL, Member::_loadAttr, this);
 
-        cout << absoluteName() << endl;
-        cout << "datasets: ";
-        for (string s : datasets())
-        {
-            cout << s << " - ";
-        }
-        cout << endl;
+//        cout << absoluteName() << endl;
+//        cout << "datasets: ";
+//        for (string s : datasets())
+//        {
+//            cout << s << " - ";
+//        }
+//        cout << endl;
 
-        cout << "Attributes: ";
-        for (string s : attributes())
-        {
-            cout << s << " - ";
-        }
-        cout << endl;
+//        cout << "Attributes: ";
+//        for (string s : attributes())
+//        {
+//            cout << s << " - ";
+//        }
+//        cout << endl;
 
-        cout << "Members: ";
-        for (const auto & member : m_members)
-        {
-            cout << member.second->ID() << " - ";
-        }
-        cout << endl;
+//        cout << "Members: ";
+//        for (const auto & member : m_members)
+//        {
+//            cout << member.second->ID() << " - ";
+//        }
+//        cout << endl;
 
-        cout << "---------------------" << endl;
+//        cout << "---------------------" << endl;
 
     }
 };

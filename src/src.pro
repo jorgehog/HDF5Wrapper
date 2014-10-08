@@ -4,7 +4,6 @@ TARGET = ../lib/HDF5Wrapper
 
 include(../defaults.pri)
 
-
 QMAKE_LFLAGS_DEBUG += -g
 
 noarma {

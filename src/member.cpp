@@ -30,6 +30,11 @@ Member::~Member()
     _clearall();
 }
 
+void Member::flush()
+{
+    H5Fflush(m_group->getId(), H5F_SCOPE_GLOBAL);
+}
+
 void Member::purge()
 {
 
@@ -45,9 +50,10 @@ void Member::purge()
 
     for (auto &member : m_members)
     {
-        member.second->purge();
+        removeMember(member.second);
     }
 
+    m_members.clear();
     m_attributes.clear();
     m_datasets.clear();
 

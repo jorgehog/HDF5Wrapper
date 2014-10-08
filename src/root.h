@@ -26,7 +26,6 @@ public:
 
     void close();
     void open(const uint flag = H5F_ACC_RDWR);
-    void flush();
 
 private:
 
