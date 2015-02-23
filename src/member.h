@@ -322,7 +322,7 @@ public:
     //Pointer is the main storage function. All others simply channel this one.
     template<typename kT, typename eT>
     typename std::enable_if<std::is_pointer<eT>::value, bool>::type
-    addData(const kT &_setname, const eT &data, const vector<size_t> &dims, bool overWrite = false)
+    addData(const kT &_setname, const eT &data, const vector<size_t> &dims, bool overWrite = true)
     {
         if (_notStorable(data, dims))
         {
@@ -364,7 +364,7 @@ public:
     //Static object.
     template<typename kT, typename eT>
     typename std::enable_if<!std::is_pointer<eT>::value, bool>::type
-    addData(const kT &setname, const eT &data, const vector<size_t> &dims, bool overWrite = false)
+    addData(const kT &setname, const eT &data, const vector<size_t> &dims, bool overWrite = true)
     {
         return addData(setname, &data, dims, overWrite);
     }
@@ -372,7 +372,7 @@ public:
     //vector of std::strings
     template<typename kT>
     bool
-    addData(const kT &_setname, const string *data, const vector<size_t> &dims, bool overWrite = false)
+    addData(const kT &_setname, const string *data, const vector<size_t> &dims, bool overWrite = true)
     {
         if (_notStorable(data, dims))
         {
@@ -436,7 +436,7 @@ public:
     //attributes
     template<typename kT, typename eT>
     bool
-    addData(const kT &_attrname, const eT &data, bool overWrite = false)
+    addData(const kT &_attrname, const eT &data, bool overWrite = true)
     {
         string attrname = _stringify(_attrname);
 
@@ -462,14 +462,14 @@ public:
 
     //std vectors
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const vector<eT> &data, bool overWrite = false)
+    bool addData(const kT &setname, const vector<eT> &data, bool overWrite = true)
     {
         return addData(setname, data.front(), {data.size()}, overWrite);
     }
 
     //std sets
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const set<eT> &data, bool overWrite = false)
+    bool addData(const kT &setname, const set<eT> &data, bool overWrite = true)
     {
         vector<eT> vectorOfSet(data.size());
 
@@ -487,25 +487,25 @@ public:
     //Armadillo objects can be disabled.
 #ifndef HDF5_NO_ARMA
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const Col<eT> &data, bool overWrite = false)
+    bool addData(const kT &setname, const Col<eT> &data, bool overWrite = true)
     {
         return addData(setname, data.memptr(), {data.n_elem}, overWrite);
     }
 
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const Row<eT> &data, bool overWrite = false)
+    bool addData(const kT &setname, const Row<eT> &data, bool overWrite = true)
     {
         return addData(setname, data.memptr(), {data.n_elem}, overWrite);
     }
 
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const Mat<eT> &data, bool overWrite = false)
+    bool addData(const kT &setname, const Mat<eT> &data, bool overWrite = true)
     {
         return addData(setname, data.memptr(),{data.n_cols, data.n_rows}, overWrite);
     }
 
     template<typename kT, typename eT>
-    bool addData(const kT &setname, const Cube<eT> &data, bool overWrite = false)
+    bool addData(const kT &setname, const Cube<eT> &data, bool overWrite = true)
     {
         return addData(setname, data.memptr(), {data.n_slices, data.n_rows, data.n_cols}, overWrite);
     }
