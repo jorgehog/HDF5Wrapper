@@ -34,7 +34,7 @@ void Root::open(const uint flag)
     try
     {
         m_file = new H5File(m_filename, flag);
-        cout << "Opened HDF5 file " << m_filename << endl;
+//        cout << "Opened HDF5 file " << m_filename << endl;
 
         m_group = new Group(m_file->openGroup("/"));
 
@@ -47,7 +47,7 @@ void Root::open(const uint flag)
 
         m_file = new H5File(m_filename, H5F_ACC_TRUNC);
 
-        cout << "Created new HDF5 file " << m_filename << endl;
+//        cout << "Created new HDF5 file " << m_filename << endl;
 
         m_group = new Group(m_file->openGroup("/"));
     }
