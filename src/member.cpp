@@ -6,7 +6,7 @@ using namespace std;
 Member::Member(const Member *parent, const string ID) :
     m_parent(parent),
     m_ID(ID),
-    m_file(isRoot() ? NULL : parent->file())
+    m_file(isRoot() ? nullptr: parent->file())
 {
 
     if (!isRoot())
@@ -63,7 +63,7 @@ bool Member::_notStorable(const void *buffer, const vector<size_t> &dims) const
 {
     //Zero rank, null buffer, or either dimension zero is not storable.
 
-    bool notStorable = (buffer == NULL) || (dims.size() == 0);
+    bool notStorable = (buffer == nullptr) || (dims.size() == 0);
 
     for (const uint &dim : dims)
     {
@@ -84,9 +84,9 @@ void Member::_clearall()
     m_datasets.clear();
     m_attributes.clear();
 
-    if (m_group != NULL)
+    if (m_group != nullptr)
     {
         delete m_group;
-        m_group = NULL;
+        m_group = nullptr;
     }
 }

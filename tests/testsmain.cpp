@@ -386,7 +386,7 @@ int main()
 {
     Root root("testfile.h5");
 
-    srand(time(NULL));
+    srand(time(nullptr));
 
     _randomvalues::int_value = 10*as_scalar(randu(1,1));
     _randomvalues::double_value = as_scalar(randu(1,1));
@@ -419,15 +419,15 @@ int main()
     trash.addData("trish", a, {2,2});
     trash.addMember("megatrash");
 
-    BADAssEqual(1, trash.attributes().size());
-    BADAssEqual(1, trash.datasets().size());
-    BADAssEqual(1, trash.members().size());
+    BADAssEqual(1u, trash.attributes().size());
+    BADAssEqual(1u, trash.datasets().size());
+    BADAssEqual(1u, trash.members().size());
 
     trash.purge();
 
-    BADAssEqual(0, trash.attributes().size());
-    BADAssEqual(0, trash.datasets().size());
-    BADAssEqual(0, trash.members().size());
+    BADAssEqual(0u, trash.attributes().size());
+    BADAssEqual(0u, trash.datasets().size());
+    BADAssEqual(0u, trash.members().size());
 
     root.removeMember(trash);
 

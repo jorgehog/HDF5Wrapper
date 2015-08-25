@@ -52,7 +52,7 @@ public:
 
     bool isRoot() const
     {
-        return m_parent == NULL;
+        return m_parent == nullptr;
     }
 
     const string &ID() const
@@ -161,7 +161,7 @@ public:
         m_group->unlink(key);
 
         delete member;
-        member = NULL;
+        member = nullptr;
 
         m_members.erase(key);
     }
@@ -689,9 +689,9 @@ protected:
 
     void _loadFromFile()
     {
-        m_file->iterateElems(absoluteName(), NULL, Member::_loadGroupAndDataset, this);
+        m_file->iterateElems(absoluteName(), nullptr, Member::_loadGroupAndDataset, this);
 
-        H5Aiterate(m_group->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, NULL, Member::_loadAttr, this);
+        H5Aiterate(m_group->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, nullptr, Member::_loadAttr, this);
 
 //        cout << absoluteName() << endl;
 //        cout << "datasets: ";

@@ -9,7 +9,7 @@ using namespace std;
 #include <hdf5.h>
 
 Root::Root(const std::string filename, const uint flag) :
-    Member(NULL, ""),
+    Member(nullptr, ""),
     m_filename(filename),
     m_state(state::CLOSED)
 {
