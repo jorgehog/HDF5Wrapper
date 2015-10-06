@@ -401,11 +401,11 @@ int main()
 
     Member &staticMember = root.addMember("static");
     suite(STATIC, staticMember);
-//    stringSuite(POINTER, root);
+    //stringSuite(POINTER, root);
 
     Member &pointerMember = root.addMember("pointer");
     suite(POINTER, pointerMember);
-//    stringSuite(POINTER, root);
+    //stringSuite(POINTER, root);
 
 #ifndef HDF5_NO_ARMA
     Member &armaMember = root.addMember("arma");
@@ -432,6 +432,39 @@ int main()
     root.removeMember(trash);
 
     BADAssBool(!root.hasMember("Trash"));
+
+    //
+    root.addMember("lols");
+
+    Member &lols = *root.getMember("lols");
+
+    uint b = 3;
+    string kkey = "hei";
+    lols[kkey] = b;
+
+    root.flush();
+
+    uint A = lols[kkey];
+
+    cout << A << endl;
+
+    mat TEST = randu(3, 3);
+
+    cout << TEST << endl;
+
+    lols["matrise"] = TEST;
+
+    root.flush();
+
+    mat TEST3;
+    lols.readData("matrise", TEST3);
+    cout << TEST3 << endl;
+
+    mat TEST2 = lols["matrise"];
+
+    cout << TEST2 << endl;
+
+    cout << "End of test." << endl;
 
     return 0;
 }

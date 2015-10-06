@@ -18,7 +18,8 @@ SOURCES += \
 HEADERS += \
     ctopredtype.h \
     root.h \
-    member.h
+    member.h \
+    intermediate.h
 
 
 QMAKE_PRE_LINK += $(MKDIR) $$PWD/../lib $$shadowed($$PWD)/../lib

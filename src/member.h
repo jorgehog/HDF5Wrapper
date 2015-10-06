@@ -42,6 +42,8 @@ using H5::CompType;
 namespace H5Wrapper
 {
 
+class Intermediate;
+
 class Member
 {
 public:
@@ -153,7 +155,6 @@ public:
 
         BADAssBool(hasMember(key), "Member not found: " + key);
 
-
         Member *member = m_members[key];
 
         member->purge();
@@ -176,26 +177,43 @@ public:
         removeMember(&member);
     }
 
+    //    template<typename kT>
+    //    const Member *operator [](const kT &_key) const
+    //    {
+    //        string key = _stringify(_key);
+
+    //        BADAssBool(hasMember(key), "Member not found: " + key);
+
+
+    //        return (*m_members.find(key)).second;
+    //    }
+
+    //    template<typename kT>
+    //    Member *operator[](const kT &_key)
+    //    {
+    //        string key = _stringify(_key);
+
+    //        BADAssBool(hasMember(key), "Member not found: " + key);
+
+
+    //        return m_members[key];
+    //    }
+
     template<typename kT>
-    const Member *operator [](const kT &_key) const
+    Member *getMember(const kT &_key)
     {
         string key = _stringify(_key);
 
         BADAssBool(hasMember(key), "Member not found: " + key);
-
-
-        return (*m_members.find(key)).second;
-    }
-
-    template<typename kT>
-    Member *operator[](const kT &_key)
-    {
-        string key = _stringify(_key);
-
-        BADAssBool(hasMember(key), "Member not found: " + key);
-
 
         return m_members[key];
+    }
+
+    template<typename kT, typename eT>
+    typename std::enable_if<!std::is_pointer<eT>::value, void>::type
+    readData(const kT &_setname, eT &data)
+    {
+        readData(_setname, &data);
     }
 
     template<typename kT, typename eT>
@@ -514,14 +532,14 @@ public:
     void
     readData(const kT &_setname, Col<eT> &data)
     {
-       vector<hsize_t> dims = getDims(_setname);
-       const uint &N = dims[0];
+        vector<hsize_t> dims = getDims(_setname);
+        const uint &N = dims[0];
 
-       eT* mem = new eT[N];
+        eT* mem = new eT[N];
 
-       readData(_setname, mem);
+        readData(_setname, mem);
 
-       data = Col<eT>(mem, N, false, true); //strict true to avoid memory leakage.
+        data = Col<eT>(mem, N, false, true); //strict true to avoid memory leakage.
     }
 
     template<typename kT, typename eT>
@@ -608,6 +626,8 @@ public:
         return m_members;
     }
 
+    Intermediate operator [] (const string &name);
+
 private:
 
     const Member *m_parent;
@@ -693,31 +713,44 @@ protected:
 
         H5Aiterate(m_group->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, nullptr, Member::_loadAttr, this);
 
-//        cout << absoluteName() << endl;
-//        cout << "datasets: ";
-//        for (string s : datasets())
-//        {
-//            cout << s << " - ";
-//        }
-//        cout << endl;
+        //        cout << absoluteName() << endl;
+        //        cout << "datasets: ";
+        //        for (string s : datasets())
+        //        {
+        //            cout << s << " - ";
+        //        }
+        //        cout << endl;
 
-//        cout << "Attributes: ";
-//        for (string s : attributes())
-//        {
-//            cout << s << " - ";
-//        }
-//        cout << endl;
+        //        cout << "Attributes: ";
+        //        for (string s : attributes())
+        //        {
+        //            cout << s << " - ";
+        //        }
+        //        cout << endl;
 
-//        cout << "Members: ";
-//        for (const auto & member : m_members)
-//        {
-//            cout << member.second->ID() << " - ";
-//        }
-//        cout << endl;
+        //        cout << "Members: ";
+        //        for (const auto & member : m_members)
+        //        {
+        //            cout << member.second->ID() << " - ";
+        //        }
+        //        cout << endl;
 
-//        cout << "---------------------" << endl;
+        //        cout << "---------------------" << endl;
 
     }
 };
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

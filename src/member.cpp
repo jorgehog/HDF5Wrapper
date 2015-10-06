@@ -1,5 +1,7 @@
 #include "member.h"
 
+#include "intermediate.h"
+
 using namespace H5Wrapper;
 using namespace std;
 
@@ -58,6 +60,12 @@ void Member::purge()
     m_datasets.clear();
 
 }
+
+Intermediate Member::operator [](const string &name)
+{
+    return Intermediate(this, name);
+}
+
 
 bool Member::_notStorable(const void *buffer, const vector<size_t> &dims) const
 {
