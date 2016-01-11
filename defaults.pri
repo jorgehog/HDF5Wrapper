@@ -2,7 +2,7 @@ CONFIG -= qt
 
 INCLUDEPATH += /usr/local/hdf5/include
 
-LIBS +=-L/usr/local/hdf5/lib -lhdf5_cpp -lhdf5
+LIBS +=-L/usr/local/hdf5/lib -lhdf5_cpp -lhdf5 -larmadillo
 
 #!noccache {
 #    QMAKE_CXX = ccache $$QMAKE_CXX
